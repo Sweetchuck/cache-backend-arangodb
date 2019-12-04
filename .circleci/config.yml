@@ -1,0 +1,245 @@
+
+version: 2.1
+
+.env_common: &env_common
+    SHELL: '/bin/bash'
+
+.env_composer: &env_composer
+    COMPOSER_NO_INTERACTION: '1'
+    COMPOSER_MEMORY_LIMIT: '-1'
+    COMPOSER_DISABLE_XDEBUG_WARN: '1'
+
+.env_arangodb_common: &env_arangodb_common
+    ARANGO_ROOT_PASSWORD: 'root'
+
+.env_arangodb_server: &env_arangodb_server
+    ARANGO_NO_AUTH: 1
+
+.env_arangodb_client: &env_arangodb_client
+    ARANGODB_CACHE_OPTION_ENDPOINT: 'tcp://arangodb:8529'
+    ARANGODB_CACHE_OPTION_AUTHUSER: 'root'
+    ARANGODB_CACHE_OPTION_AUTHPASSWD: 'root'
+    ARANGODB_CACHE_OPTION_DATABASE: 'cache'
+
+.docker:
+    php704: &docker_php704
+        image: 'circleci/php:7.4'
+        environment:
+            <<: *env_common
+            <<: *env_composer
+            <<: *env_arangodb_common
+            <<: *env_arangodb_client
+
+    php703: &docker_php703
+        image: 'circleci/php:7.3'
+        environment:
+            <<: *env_common
+            <<: *env_composer
+            <<: *env_arangodb_common
+            <<: *env_arangodb_client
+
+    arangodb703: &docker_arangodb307
+        image: 'arangodb:3.7.3'
+        environment:
+            <<: *env_arangodb_common
+            <<: *env_arangodb_server
+
+orbs:
+    codecov: codecov/codecov@1.1.3
+
+executors:
+    php704_arangodb307:
+        docker:
+            -
+                name: 'main'
+                <<: *docker_php704
+            -
+                name: 'arangodb'
+                <<: *docker_arangodb307
+
+    php703:
+        docker:
+            -
+                name: 'main'
+                <<: *docker_php703
+
+    php703_arangodb307:
+        docker:
+            -
+                name: 'main'
+                <<: *docker_php703
+            -
+                name: 'arangodb'
+                <<: *docker_arangodb307
+
+commands:
+    composer_install:
+        description: 'Install Composer dependencies with cache restore and save'
+        steps:
+            -
+                restore_cache:
+                    name: 'Composer - cache restore'
+                    keys:
+                        - 'composer-{{ checksum "./composer.lock" }}-1'
+
+            -
+                run:
+                    name: 'Composer - install'
+                    command: >
+                        composer install --no-progress
+
+            -
+                save_cache:
+                    name: 'Composer - cache save'
+                    key: 'composer-{{ checksum "./composer.lock" }}-1'
+                    paths:
+                        - '~/.composer/cache/'
+
+
+    lint:
+        description: 'Run linters'
+        steps:
+            -
+                run:
+                    name: 'Run linters'
+                    command: 'bin/robo lint'
+
+    php_extension_igbinary:
+        description: 'PHP extension - igbinary'
+        steps:
+            -
+                run:
+                    name: 'PHP extension - igbinary - install'
+                    command: 'sudo pecl install igbinary'
+            -
+                run:
+                    name: 'PHP extension - igbinary - configure'
+                    command: |
+                        sudo ${SHELL} -c "echo 'extension=igbinary.so' > '/usr/local/etc/php/conf.d/igbinary.ini'"
+
+    php_extension_msgpack:
+        description: 'PHP extension - msgpack'
+        steps:
+            -
+                run:
+                    name: 'PHP extension - msgpack - install'
+                    command: 'sudo pecl install msgpack'
+            -
+                run:
+                    name: 'PHP extension - msgpack - configure'
+                    command: |
+                        sudo ${SHELL} -c "echo 'extension=msgpack.so' > '/usr/local/etc/php/conf.d/msgpack.ini'"
+
+    arangodb_wait:
+        description: 'Wait until ArangoDB ready to serve'
+        steps:
+            -
+                run:
+                    name: 'Wait until ArangoDB ready to serve'
+                    command: '. ./.circleci/arangodb-wait.bash'
+
+    arangodb_database_create:
+        description: 'Create ArangoDB database'
+        steps:
+            -
+                run:
+                    name: 'Create ArangoDB database'
+                    command: '. ./.circleci/arangodb-database-create.bash'
+
+    test:
+        description: 'Run tests'
+        steps:
+            -
+                run:
+                    name: 'Delete all the reports'
+                    command: 'rm -rf ./reports/'
+            -
+                run:
+                    name: 'Test - unit'
+                    command: 'bin/robo test Unit'
+            -
+                codecov/upload:
+                    flags: 'unit'
+                    file: './reports/machine/coverage/coverage.xml'
+            -
+                store_test_results:
+                    name: 'Store unit test results'
+                    path: './reports/machine/unit'
+            -
+                run:
+                    name: 'Delete all the reports'
+                    command: 'rm -rf ./reports/'
+            -
+                run:
+                    name: 'Test - acceptance'
+                    command: 'bin/robo test Acceptance'
+            -
+                codecov/upload:
+                    flags: 'acceptance'
+                    file: './reports/machine/coverage/coverage.xml'
+            -
+                store_test_results:
+                    name: 'Store unit test results'
+                    path: './reports/machine/unit'
+
+jobs:
+    dummy:
+        executor: 'php703_arangodb307'
+        working_directory: '~/repo'
+        steps:
+            - 'checkout'
+            - 'arangodb_wait'
+            - 'arangodb_database_create'
+    build:
+        executor: 'php703'
+        working_directory: '~/repo'
+        steps:
+            - 'checkout'
+            - 'composer_install'
+    lint:
+        executor: 'php703'
+        working_directory: '~/repo'
+        steps:
+            - 'checkout'
+            - 'composer_install'
+            - 'lint'
+    test_php704:
+        executor: 'php704_arangodb307'
+        working_directory: '~/repo'
+        steps:
+            - 'checkout'
+            - 'php_extension_msgpack'
+            - 'php_extension_igbinary'
+            - 'composer_install'
+            - 'arangodb_wait'
+            - 'arangodb_database_create'
+            - 'test'
+    test_php703:
+        executor: 'php703_arangodb307'
+        working_directory: '~/repo'
+        steps:
+            - 'checkout'
+            - 'php_extension_msgpack'
+            - 'php_extension_igbinary'
+            - 'composer_install'
+            - 'arangodb_wait'
+            - 'arangodb_database_create'
+            - 'test'
+
+workflows:
+    lint_and_test:
+        jobs:
+            -
+                build: {}
+            -
+                lint:
+                    requires:
+                        - build
+            -
+                test_php704:
+                    requires:
+                        - build
+            -
+                test_php703:
+                    requires:
+                        - build
