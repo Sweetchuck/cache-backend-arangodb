@@ -1,6 +1,6 @@
 # Psr/Cache compatible pool implementation with ArangoDB
 
-[![CircleCI](https://circleci.com/gh/sweetchuck/cache-backend-arangodb.svg?style=svg)](https://circleci.com/gh/sweetchuck/cache-backend-arangodb)
+[![CircleCI](https://circleci.com/gh/Sweetchuck/cache-backend-arangodb.svg?style=svg)](https://circleci.com/gh/Sweetchuck/cache-backend-arangodb)
 [![codecov](https://codecov.io/gh/Sweetchuck/cache-backend-arangodb/branch/1.x/graph/badge.svg)](https://codecov.io/gh/Sweetchuck/cache-backend-arangodb)
 
 
