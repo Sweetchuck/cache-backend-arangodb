@@ -32,7 +32,7 @@ class CacheItemPoolTest extends CachePoolTest
      */
     protected function tearDown(): void
     {
-        parent::tearDown();
         $this->tearDownConnections();
+        parent::tearDown();
     }
 }

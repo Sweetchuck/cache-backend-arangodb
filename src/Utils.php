@@ -4,6 +4,8 @@ declare(strict_types = 1);
 
 namespace Sweetchuck\CacheBackend\ArangoDb;
 
+use DateInterval;
+
 class Utils
 {
 
@@ -20,5 +22,16 @@ class Utils
         }
 
         return $items;
+    }
+
+    /**
+     * @param null|int|float $seconds
+     */
+    public static function secondsToDateInterval($seconds)
+    {
+        $interval = new DateInterval(sprintf('PT%dS', max(0, $seconds)));
+        $interval->f = fmod($seconds, 1);
+
+        return $interval;
     }
 }

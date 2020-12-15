@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Sweetchuck\CacheBackend\ArangoDb;
 
 use Cache\Adapter\Common\PhpCacheItem;
-use DateInterval;
 use Sweetchuck\CacheBackend\ArangoDb\Validator\BasicValidator;
 
 class CacheItem implements PhpCacheItem
@@ -107,8 +106,8 @@ class CacheItem implements PhpCacheItem
             return $this;
         }
 
-        if (is_int($time)) {
-            $time = new DateInterval(sprintf('PT%dS', max(0, $time)));
+        if (is_int($time) || is_float($time)) {
+            $time = Utils::secondsToDateInterval($time);
         }
 
         $this->expires = $this->getNow()->add($time);
@@ -123,6 +122,43 @@ class CacheItem implements PhpCacheItem
     public function getExpirationTimestamp()
     {
         return $this->expires ? (int) $this->expires->format('U') : null;
+    }
+
+    /**
+     * @var null|\DateTimeInterface
+     */
+    protected $created = null;
+
+    public function getCreated(): ?\DateTimeInterface
+    {
+        return $this->created;
+    }
+
+    public function getCreatedTimestamp(): ?float
+    {
+        return $this->created ? (float) $this->created->format('U.u') : null;
+    }
+
+    /**
+     * @return $this
+     */
+    public function setCreated(?\DateTimeInterface $created)
+    {
+        $this->created = $created;
+
+        return $this;
+    }
+
+    /**
+     * @param null|int|float $created
+     *
+     * @return $this
+     */
+    public function setCreatedTimestamp($created)
+    {
+        $this->created = $created === null ? null : \DateTime::createFromFormat('U.u', (string) $created);
+
+        return $this;
     }
 
     public function isAlive(): bool

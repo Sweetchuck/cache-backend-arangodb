@@ -7,7 +7,6 @@ namespace Sweetchuck\CacheBackend\ArangoDb;
 use ArangoDBClient\Document;
 use Cache\Adapter\Common\HasExpirationTimestampInterface;
 use Cache\Adapter\Common\PhpCacheItem;
-use DateTime;
 use Psr\Cache\CacheItemInterface;
 
 class CacheDocumentConverter implements CacheDocumentConverterInterface
@@ -51,12 +50,10 @@ class CacheDocumentConverter implements CacheDocumentConverterInterface
 
         $expires = $document->get('expires');
         if ($expires !== null) {
-            if (is_int($expires)) {
-                $expires = "@{$expires}";
-            }
-
-            $item->expiresAt(new DateTime($expires));
+            $item->expiresAt(\DateTime::createFromFormat('U', (string) intval($expires)));
         }
+
+        $item->setCreatedTimestamp($document->get('created'));
 
         return $item;
     }
@@ -118,6 +115,10 @@ class CacheDocumentConverter implements CacheDocumentConverterInterface
             sort($tags);
 
             $document->tags = $tags;
+        }
+
+        if ($item instanceof CacheItem) {
+            $document->created = $item->getCreatedTimestamp();
         }
 
         return $document;

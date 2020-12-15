@@ -20,11 +20,11 @@ class TaggableCachePoolTest extends TaggableCachePoolTestBase
     use ConnectionTrait;
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      */
     protected function tearDown(): void
     {
-        parent::tearDown();
         $this->tearDownConnections();
+        parent::tearDown();
     }
 }

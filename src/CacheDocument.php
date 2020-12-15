@@ -11,7 +11,7 @@ use ArangoDBClient\Document;
  * @property mixed $value
  * @property null|int|string $expires
  * @property string[] $tags
- * @property float $created
+ * @property null|float $created
  */
 class CacheDocument extends Document
 {
