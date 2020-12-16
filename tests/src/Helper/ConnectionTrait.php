@@ -16,6 +16,11 @@ use Sweetchuck\CacheBackend\ArangoDb\CacheItemPool;
 trait ConnectionTrait
 {
     /**
+     * @var \ArangoDBClient\Connection
+     */
+    protected static $connection;
+
+    /**
      * @var \Sweetchuck\CacheBackend\ArangoDb\CacheItemPool[]
      */
     protected $cachePools = [];
@@ -51,6 +56,15 @@ trait ConnectionTrait
             $this->getName(false) ?: 'unknown',
             $dataNameSafe ?: 0,
         );
+    }
+
+    protected function getConnection(): Connection
+    {
+        if (!static::$connection) {
+            static::$connection = new Connection($this->getConnectionOptions());
+        }
+
+        return static::$connection;
     }
 
     protected function getConnectionOptions(): array
@@ -102,7 +116,7 @@ trait ConnectionTrait
      */
     public function createCachePool()
     {
-        $connection = new Connection($this->getConnectionOptions());
+        $connection = $this->getConnection();
         $pool = new CacheItemPool();
         $pool->setConnection($connection);
         $pool->setCollectionName($this->getCollectionName());

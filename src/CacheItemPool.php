@@ -134,7 +134,11 @@ class CacheItemPool implements
         }
 
         if (!$this->collection) {
-            $this->collection = $this->schemaManager->createCollection($this->collectionHandler, $collectionName);
+            try {
+                $this->collection = $this->schemaManager->createCollection($this->collectionHandler, $collectionName);
+            } catch (\Exception $e) {
+                return $this;
+            }
         }
 
         if (!$this->documentHandler) {
