@@ -179,7 +179,7 @@ commands:
                     file: './reports/machine/coverage/coverage.xml'
             -
                 store_test_results:
-                    name: 'Store unit test results'
+                    name: 'Store acceptance test results'
                     path: './reports/machine/unit'
 
 jobs:
