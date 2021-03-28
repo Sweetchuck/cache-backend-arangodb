@@ -32,7 +32,16 @@ class SimpleCacheTest extends SimpleCacheTestBase
      */
     protected function tearDown(): void
     {
-        $this->tearDownConnections();
         parent::tearDown();
+        $this->tearDownService();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function tearDownService()
+    {
+        parent::tearDownService();
+        $this->tearDownConnections();
     }
 }
