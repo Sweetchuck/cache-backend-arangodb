@@ -756,12 +756,16 @@ class CacheItemPool implements
         return $this;
     }
 
+    public function hasBin(): bool
+    {
+        return $this->collectionHandler
+            && $this->collection
+            && $this->collectionHandler->has($this->collection);
+    }
+
     public function removeBin()
     {
-        if ($this->collectionHandler
-            && $this->collection
-            && $this->collectionHandler->has($this->collection)
-        ) {
+        if ($this->hasBin()) {
             $this->collectionHandler->drop($this->collection);
         }
 
