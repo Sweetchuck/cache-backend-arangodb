@@ -22,6 +22,14 @@ version: 2.1
     ARANGODB_CACHE_OPTION_DATABASE: 'cache'
 
 .docker:
+    php800: &docker_php800
+        image: 'circleci/php:8.0'
+        environment:
+            <<: *env_common
+            <<: *env_composer
+            <<: *env_arangodb_common
+            <<: *env_arangodb_client
+
     php704: &docker_php704
         image: 'circleci/php:7.4'
         environment:
@@ -48,6 +56,15 @@ orbs:
     codecov: codecov/codecov@1.1.3
 
 executors:
+    php800_arangodb307:
+        docker:
+            -
+                name: 'main'
+                <<: *docker_php800
+            -
+                name: 'arangodb'
+                <<: *docker_arangodb307
+
     php704_arangodb307:
         docker:
             -
@@ -203,6 +220,17 @@ jobs:
             - 'checkout'
             - 'composer_install'
             - 'lint'
+    test_php800:
+        executor: 'php800_arangodb307'
+        working_directory: '~/repo'
+        steps:
+            - 'checkout'
+            - 'php_extension_msgpack'
+            - 'php_extension_igbinary'
+            - 'composer_install'
+            - 'arangodb_wait'
+            - 'arangodb_database_create'
+            - 'test'
     test_php704:
         executor: 'php704_arangodb307'
         working_directory: '~/repo'
@@ -233,6 +261,10 @@ workflows:
                 build: {}
             -
                 lint:
+                    requires:
+                        - build
+            -
+                test_php800:
                     requires:
                         - build
             -
