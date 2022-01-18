@@ -1,11 +1,8 @@
 
-/bin/
 /reports/
-/tests/_data/actual/
-/tests/_envs/*.local.yml
-/tests/_output/
-/tests/_support/_generated/
 /vendor/
+
+/robo.yml
 
 /.phpunit.result.cache
 /phpunit.xml

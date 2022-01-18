@@ -10,29 +10,36 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "config": {
-        "bin-dir": "bin",
+        "allow-plugins": {
+            "composer/package-versions-deprecated": true,
+            "sweetchuck/git-hooks": true,
+            "cweagans/composer-patches": true
+        },
         "optimize-autoloader": false,
         "preferred-install": "dist",
         "sort-packages": true
     },
     "repositories": {},
     "require": {
-        "php": ">=7.3",
+        "php": ">=7.4",
         "cache/adapter-common": "^1.1",
+        "cweagans/composer-patches": "^1.7",
         "psr/cache": "^1.0",
         "psr/simple-cache": "^1.0",
-        "triagens/arangodb": "^3.5"
+        "triagens/arangodb": "dev-devel#2230af97d2e9c03c9109857888ec11de084f0745"
     },
     "require-dev": {
+        "ext-json": "*",
         "cache/integration-tests": "^0.17",
-        "consolidation/robo": "^2.2",
-        "phpunit/phpunit": "^8.0",
+        "consolidation/robo": "^3.0",
+        "nuvoleweb/robo-config": "^2.0",
+        "phpunit/phpunit": "^9.0",
         "squizlabs/php_codesniffer": "^3.5",
         "sweetchuck/git-hooks": "2.x-dev",
-        "sweetchuck/robo-git": "^0.3.0",
-        "sweetchuck/robo-phpcs": "^0.2.0",
-        "sweetchuck/robo-phpmd": "^0.2",
-        "sweetchuck/robo-phpunit": "1.x-dev",
+        "sweetchuck/robo-git": "2.x-dev",
+        "sweetchuck/robo-phpcs": "2.x-dev",
+        "sweetchuck/robo-phpmd": "2.x-dev",
+        "sweetchuck/robo-phpunit": "2.x-dev",
         "symfony/phpunit-bridge": "^5.0",
         "vimeo/psalm": "^4.3"
     },
@@ -50,6 +57,15 @@
         "ext-igbinary": "One of the data serializer uses the 'igbinary' extension. https://pecl.php.net/package/igbinary",
         "ext-json": "One of the data serializer uses the 'json' extension.",
         "ext-msgpack": "One of the data serializer uses the 'msgpack' extension. https://pecl.php.net/package/msgpack"
+    },
+    "extra": {
+        "enable-patching": true,
+        "composer-exit-on-patch-failure": true,
+        "patches": {
+            "triagens/arangodb": {
+                "https://github.com/arangodb/arangodb-php/issues/290 - Support PHP 8.1": "https://patch-diff.githubusercontent.com/raw/arangodb/arangodb-php/pull/291.patch"
+            }
+        }
     },
     "scripts": {
         "test": [
