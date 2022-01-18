@@ -1,6 +1,9 @@
 
 version: 2.1
 
+orbs:
+    codecov: 'codecov/codecov@3.0.0'
+
 .env_common: &env_common
     SHELL: '/bin/bash'
 
@@ -8,6 +11,7 @@ version: 2.1
     COMPOSER_NO_INTERACTION: '1'
     COMPOSER_MEMORY_LIMIT: '-1'
     COMPOSER_DISABLE_XDEBUG_WARN: '1'
+    COMPOSER_CACHE_DIR: '/home/circleci/.cache/composer'
 
 .env_arangodb_common: &env_arangodb_common
     ARANGO_ROOT_PASSWORD: 'root'
@@ -22,15 +26,7 @@ version: 2.1
     ARANGODB_CACHE_OPTION_DATABASE: 'cache'
 
 .docker:
-    php800: &docker_php800
-        image: 'circleci/php:8.0'
-        environment:
-            <<: *env_common
-            <<: *env_composer
-            <<: *env_arangodb_common
-            <<: *env_arangodb_client
-
-    php704: &docker_php704
+    php_min: &docker_php_min
         image: 'circleci/php:7.4'
         environment:
             <<: *env_common
@@ -38,8 +34,16 @@ version: 2.1
             <<: *env_arangodb_common
             <<: *env_arangodb_client
 
-    php703: &docker_php703
-        image: 'circleci/php:7.3'
+    php_plus1: &docker_php_plus1
+        image: 'circleci/php:8.0'
+        environment:
+            <<: *env_common
+            <<: *env_composer
+            <<: *env_arangodb_common
+            <<: *env_arangodb_client
+
+    php_plus2: &docker_php_plus2
+        image: 'cimg/php:8.1'
         environment:
             <<: *env_common
             <<: *env_composer
@@ -52,39 +56,36 @@ version: 2.1
             <<: *env_arangodb_common
             <<: *env_arangodb_server
 
-orbs:
-    codecov: codecov/codecov@1.1.3
-
 executors:
-    php800_arangodb307:
+    php_min:
         docker:
             -
                 name: 'main'
-                <<: *docker_php800
+                <<: *docker_php_min
+
+    php_min_arangodb307:
+        docker:
+            -
+                name: 'main'
+                <<: *docker_php_min
             -
                 name: 'arangodb'
                 <<: *docker_arangodb307
 
-    php704_arangodb307:
+    php_plus1_arangodb307:
         docker:
             -
                 name: 'main'
-                <<: *docker_php704
+                <<: *docker_php_plus1
             -
                 name: 'arangodb'
                 <<: *docker_arangodb307
 
-    php703:
+    php_plus2_arangodb307:
         docker:
             -
                 name: 'main'
-                <<: *docker_php703
-
-    php703_arangodb307:
-        docker:
-            -
-                name: 'main'
-                <<: *docker_php703
+                <<: *docker_php_plus2
             -
                 name: 'arangodb'
                 <<: *docker_arangodb307
@@ -112,14 +113,32 @@ commands:
                     paths:
                         - '~/.composer/cache/'
 
-
     lint:
         description: 'Run linters'
         steps:
             -
                 run:
                     name: 'Run linters'
-                    command: 'bin/robo lint'
+                    command: |
+                        "$(composer config bin-dir)/robo" lint
+
+    enable_php_extension:
+        description: 'Enable PHP extension: <<parameters.ext_name>>'
+        parameters:
+            ext_name:
+                type: 'string'
+        steps:
+            -
+                run:
+                    name: 'Enable PHP extension: <<parameters.ext_name>>'
+                    command: |
+                        if php -m | grep '<<parameters.ext_name>>' ; then
+                            exit 0
+                        fi
+
+                        iniDir="$(php -i | grep --only-matching --perl-regexp '(?<=Scan this dir for additional .ini files => ).+')"
+                        mkdir -p "${iniDir}"
+                        sudo ${SHELL} -c "echo 'extension=<<parameters.ext_name>>' > '${iniDir}/<<parameters.ext_name>>.ini'"
 
     php_extension_igbinary:
         description: 'PHP extension - igbinary'
@@ -129,10 +148,8 @@ commands:
                     name: 'PHP extension - igbinary - install'
                     command: 'sudo pecl install igbinary'
             -
-                run:
-                    name: 'PHP extension - igbinary - configure'
-                    command: |
-                        sudo ${SHELL} -c "echo 'extension=igbinary.so' > '/usr/local/etc/php/conf.d/igbinary.ini'"
+                enable_php_extension:
+                    ext_name: 'igbinary'
 
     php_extension_msgpack:
         description: 'PHP extension - msgpack'
@@ -142,10 +159,8 @@ commands:
                     name: 'PHP extension - msgpack - install'
                     command: 'sudo pecl install msgpack'
             -
-                run:
-                    name: 'PHP extension - msgpack - configure'
-                    command: |
-                        sudo ${SHELL} -c "echo 'extension=msgpack.so' > '/usr/local/etc/php/conf.d/msgpack.ini'"
+                enable_php_extension:
+                    ext_name: 'msgpack'
 
     arangodb_wait:
         description: 'Wait until ArangoDB ready to serve'
@@ -173,7 +188,8 @@ commands:
             -
                 run:
                     name: 'Test - unit'
-                    command: 'bin/robo test Unit'
+                    command: |
+                        "$(composer config bin-dir)/robo" test Unit
             -
                 codecov/upload:
                     flags: 'unit'
@@ -189,7 +205,8 @@ commands:
             -
                 run:
                     name: 'Test - acceptance'
-                    command: 'bin/robo test Acceptance'
+                    command: |
+                        "$(composer config bin-dir)/robo" test Acceptance
             -
                 codecov/upload:
                     flags: 'acceptance'
@@ -201,27 +218,27 @@ commands:
 
 jobs:
     dummy:
-        executor: 'php703_arangodb307'
+        executor: 'php_min_arangodb307'
         working_directory: '~/repo'
         steps:
             - 'checkout'
             - 'arangodb_wait'
             - 'arangodb_database_create'
     build:
-        executor: 'php703'
+        executor: 'php_min'
         working_directory: '~/repo'
         steps:
             - 'checkout'
             - 'composer_install'
     lint:
-        executor: 'php703'
+        executor: 'php_min'
         working_directory: '~/repo'
         steps:
             - 'checkout'
             - 'composer_install'
             - 'lint'
-    test_php800:
-        executor: 'php800_arangodb307'
+    test_php_plus2:
+        executor: 'php_plus2_arangodb307'
         working_directory: '~/repo'
         steps:
             - 'checkout'
@@ -231,8 +248,8 @@ jobs:
             - 'arangodb_wait'
             - 'arangodb_database_create'
             - 'test'
-    test_php704:
-        executor: 'php704_arangodb307'
+    test_php_plus1:
+        executor: 'php_plus1_arangodb307'
         working_directory: '~/repo'
         steps:
             - 'checkout'
@@ -242,8 +259,8 @@ jobs:
             - 'arangodb_wait'
             - 'arangodb_database_create'
             - 'test'
-    test_php703:
-        executor: 'php703_arangodb307'
+    test_php_min:
+        executor: 'php_min_arangodb307'
         working_directory: '~/repo'
         steps:
             - 'checkout'
@@ -262,16 +279,16 @@ workflows:
             -
                 lint:
                     requires:
-                        - build
+                        - 'build'
             -
-                test_php800:
+                test_php_plus2:
                     requires:
-                        - build
+                        - 'build'
             -
-                test_php704:
+                test_php_plus1:
                     requires:
-                        - build
+                        - 'build'
             -
-                test_php703:
+                test_php_min:
                     requires:
-                        - build
+                        - 'build'

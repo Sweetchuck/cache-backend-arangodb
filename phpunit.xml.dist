@@ -1,3 +1,4 @@
+<?xml version="1.0"?>
 <phpunit
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
@@ -8,13 +9,11 @@
     <php>
         <!-- Set error reporting to E_ALL. -->
         <ini name="error_reporting" value="32767" />
-
         <!-- Do not limit the amount of memory tests take to run. -->
         <ini name="memory_limit" value="-1" />
-
         <!--
-            @see \Sweetchuck\CacheBackend\ArangoDb\Test\Acceptance\ArangoDbCacheItemPoolTest::getConnectionOptions
-        -->
+                @see \Sweetchuck\CacheBackend\ArangoDb\Test\Acceptance\ArangoDbCacheItemPoolTest::getConnectionOptions
+            -->
         <!--<env name="ARANGODB_CACHE_OPTION_ENDPOINT"      value="" />-->
         <!--<env name="ARANGODB_CACHE_OPTION_AUTH_TYPE"     value="" />-->
         <!--<env name="ARANGODB_CACHE_OPTION_AUTHUSER"      value="" />-->
@@ -36,31 +35,19 @@
         </testsuite>
     </testsuites>
 
-    <filter>
-        <whitelist processUncoveredFilesFromWhitelist="true">
-            <directory>src/</directory>
-        </whitelist>
-    </filter>
-
     <logging>
-        <log
-            type="coverage-text"
-            target="php://stdout" />
-
-        <log
-            type="coverage-html"
-            target="reports/human/coverage/html" />
-
-        <log
-            type="coverage-clover"
-            target="reports/machine/coverage/coverage.xml" />
-
-        <log
-            type="testdox-html"
-            target="reports/human/unit/junit.html" />
-
-        <log
-            type="junit"
-            target="reports/machine/unit/junit.xml" />
+        <testdoxHtml outputFile="reports/human/unit/junit.html" />
+        <junit outputFile="reports/machine/unit/junit.xml" />
     </logging>
+
+    <coverage processUncoveredFiles="true">
+        <include>
+            <directory>src/</directory>
+        </include>
+        <report>
+            <clover outputFile="reports/machine/coverage/coverage.xml" />
+            <html outputDirectory="reports/human/coverage/html" />
+            <text outputFile="php://stdout" />
+        </report>
+    </coverage>
 </phpunit>
