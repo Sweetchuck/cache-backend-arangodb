@@ -50,6 +50,14 @@ orbs:
             <<: *env_arangodb_common
             <<: *env_arangodb_client
 
+    php_plus3: &docker_php_plus3
+        image: 'cimg/php:8.2'
+        environment:
+            <<: *env_common
+            <<: *env_composer
+            <<: *env_arangodb_common
+            <<: *env_arangodb_client
+
     arangodb703: &docker_arangodb307
         image: 'arangodb:3.7.3'
         environment:
@@ -90,6 +98,15 @@ executors:
                 name: 'arangodb'
                 <<: *docker_arangodb307
 
+    php_plus3_arangodb307:
+        docker:
+            -
+                name: 'main'
+                <<: *docker_php_plus3
+            -
+                name: 'arangodb'
+                <<: *docker_arangodb307
+
 commands:
     composer_install:
         description: 'Install Composer dependencies with cache restore and save'
@@ -98,7 +115,7 @@ commands:
                 restore_cache:
                     name: 'Composer - cache restore'
                     keys:
-                        - 'composer-{{ checksum "./composer.lock" }}-1'
+                        - 'composer-{{ checksum "./composer.lock" }}-2'
 
             -
                 run:
@@ -109,9 +126,9 @@ commands:
             -
                 save_cache:
                     name: 'Composer - cache save'
-                    key: 'composer-{{ checksum "./composer.lock" }}-1'
+                    key: 'composer-{{ checksum "./composer.lock" }}-2'
                     paths:
-                        - '~/.composer/cache/'
+                        - '~/.cache/composer'
 
     lint:
         description: 'Run linters'
@@ -219,49 +236,26 @@ commands:
 jobs:
     dummy:
         executor: 'php_min_arangodb307'
-        working_directory: '~/repo'
         steps:
             - 'checkout'
             - 'arangodb_wait'
             - 'arangodb_database_create'
     build:
         executor: 'php_min'
-        working_directory: '~/repo'
         steps:
             - 'checkout'
             - 'composer_install'
     lint:
         executor: 'php_min'
-        working_directory: '~/repo'
         steps:
             - 'checkout'
             - 'composer_install'
             - 'lint'
-    test_php_plus2:
-        executor: 'php_plus2_arangodb307'
-        working_directory: '~/repo'
-        steps:
-            - 'checkout'
-            - 'php_extension_msgpack'
-            - 'php_extension_igbinary'
-            - 'composer_install'
-            - 'arangodb_wait'
-            - 'arangodb_database_create'
-            - 'test'
-    test_php_plus1:
-        executor: 'php_plus1_arangodb307'
-        working_directory: '~/repo'
-        steps:
-            - 'checkout'
-            - 'php_extension_msgpack'
-            - 'php_extension_igbinary'
-            - 'composer_install'
-            - 'arangodb_wait'
-            - 'arangodb_database_create'
-            - 'test'
-    test_php_min:
-        executor: 'php_min_arangodb307'
-        working_directory: '~/repo'
+    test:
+        parameters:
+            executor:
+                type: 'string'
+        executor: '<<parameters.executor>>'
         steps:
             - 'checkout'
             - 'php_extension_msgpack'
@@ -281,14 +275,14 @@ workflows:
                     requires:
                         - 'build'
             -
-                test_php_plus2:
+                test:
+                    name: 'test_<<matrix.executor>>'
                     requires:
                         - 'build'
-            -
-                test_php_plus1:
-                    requires:
-                        - 'build'
-            -
-                test_php_min:
-                    requires:
-                        - 'build'
+                    matrix:
+                        parameters:
+                            executor:
+                                - 'php_min_arangodb307'
+                                - 'php_plus1_arangodb307'
+                                - 'php_plus2_arangodb307'
+                                - 'php_plus3_arangodb307'
