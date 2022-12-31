@@ -12,8 +12,7 @@
     "config": {
         "allow-plugins": {
             "composer/package-versions-deprecated": true,
-            "sweetchuck/git-hooks": true,
-            "cweagans/composer-patches": true
+            "sweetchuck/git-hooks": true
         },
         "optimize-autoloader": false,
         "preferred-install": "dist",
@@ -23,10 +22,9 @@
     "require": {
         "php": ">=7.4",
         "cache/adapter-common": "^1.1",
-        "cweagans/composer-patches": "^1.7",
         "psr/cache": "^1.0",
         "psr/simple-cache": "^1.0",
-        "triagens/arangodb": "dev-devel#2230af97d2e9c03c9109857888ec11de084f0745"
+        "triagens/arangodb": "dev-devel#7254837dafd9aeea3a4006b453283aff9c3507fc"
     },
     "require-dev": {
         "ext-json": "*",
@@ -58,26 +56,5 @@
         "ext-igbinary": "One of the data serializer uses the 'igbinary' extension. https://pecl.php.net/package/igbinary",
         "ext-json": "One of the data serializer uses the 'json' extension.",
         "ext-msgpack": "One of the data serializer uses the 'msgpack' extension. https://pecl.php.net/package/msgpack"
-    },
-    "extra": {
-        "enable-patching": true,
-        "composer-exit-on-patch-failure": true,
-        "patches": {
-            "triagens/arangodb": {
-                "https://github.com/arangodb/arangodb-php/issues/290 - Support PHP 8.1": "https://patch-diff.githubusercontent.com/raw/arangodb/arangodb-php/pull/291.patch"
-            }
-        }
-    },
-    "scripts": {
-        "test": [
-            "@test:acceptance"
-        ],
-        "test:acceptance": "php -d \"auto_prepend_file=${PWD}/tests/xdebug_set_filter.php\" bin/phpunit --colors --verbose --testsuite 'Acceptance'",
-        "lint": [
-            "@lint:composer",
-            "@lint:phpcs"
-        ],
-        "lint:composer": "composer validate",
-        "lint:phpcs": "phpcs"
     }
 }

@@ -27,7 +27,7 @@ orbs:
 
 .docker:
     php_min: &docker_php_min
-        image: 'circleci/php:7.4'
+        image: 'cimg/php:7.4'
         environment:
             <<: *env_common
             <<: *env_composer
@@ -35,7 +35,7 @@ orbs:
             <<: *env_arangodb_client
 
     php_plus1: &docker_php_plus1
-        image: 'circleci/php:8.0'
+        image: 'cimg/php:8.0'
         environment:
             <<: *env_common
             <<: *env_composer
@@ -58,7 +58,7 @@ orbs:
             <<: *env_arangodb_common
             <<: *env_arangodb_client
 
-    arangodb703: &docker_arangodb307
+    arangodb0307: &docker_arangodb0307
         image: 'arangodb:3.7.3'
         environment:
             <<: *env_arangodb_common
@@ -71,41 +71,41 @@ executors:
                 name: 'main'
                 <<: *docker_php_min
 
-    php_min_arangodb307:
+    php_min_arangodb0307:
         docker:
             -
                 name: 'main'
                 <<: *docker_php_min
             -
                 name: 'arangodb'
-                <<: *docker_arangodb307
+                <<: *docker_arangodb0307
 
-    php_plus1_arangodb307:
+    php_plus1_arangodb0307:
         docker:
             -
                 name: 'main'
                 <<: *docker_php_plus1
             -
                 name: 'arangodb'
-                <<: *docker_arangodb307
+                <<: *docker_arangodb0307
 
-    php_plus2_arangodb307:
+    php_plus2_arangodb0307:
         docker:
             -
                 name: 'main'
                 <<: *docker_php_plus2
             -
                 name: 'arangodb'
-                <<: *docker_arangodb307
+                <<: *docker_arangodb0307
 
-    php_plus3_arangodb307:
+    php_plus3_arangodb0307:
         docker:
             -
                 name: 'main'
                 <<: *docker_php_plus3
             -
                 name: 'arangodb'
-                <<: *docker_arangodb307
+                <<: *docker_arangodb0307
 
 commands:
     composer_install:
@@ -234,12 +234,6 @@ commands:
                     path: './reports/machine/unit'
 
 jobs:
-    dummy:
-        executor: 'php_min_arangodb307'
-        steps:
-            - 'checkout'
-            - 'arangodb_wait'
-            - 'arangodb_database_create'
     build:
         executor: 'php_min'
         steps:
@@ -282,7 +276,7 @@ workflows:
                     matrix:
                         parameters:
                             executor:
-                                - 'php_min_arangodb307'
-                                - 'php_plus1_arangodb307'
-                                - 'php_plus2_arangodb307'
-                                - 'php_plus3_arangodb307'
+                                - 'php_min_arangodb0307'
+                                - 'php_plus1_arangodb0307'
+                                - 'php_plus2_arangodb0307'
+                                - 'php_plus3_arangodb0307'
