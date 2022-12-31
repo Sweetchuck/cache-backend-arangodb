@@ -8,6 +8,7 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Robo\Common\ConfigAwareTrait;
 use Robo\Contract\ConfigAwareInterface;
+use Robo\Contract\TaskInterface;
 use Robo\Tasks;
 use Robo\Collection\CollectionBuilder;
 use Sweetchuck\LintReport\Reporter\BaseReporter;
@@ -15,6 +16,7 @@ use Sweetchuck\Robo\Git\GitTaskLoader;
 use Sweetchuck\Robo\Phpcs\PhpcsTaskLoader;
 use Sweetchuck\Robo\PhpMessDetector\PhpmdTaskLoader;
 use Sweetchuck\Robo\PHPUnit\PHPUnitTaskLoader;
+use Sweetchuck\Utils\Filter\ArrayFilterEnabled;
 use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -28,6 +30,9 @@ class RoboFile extends Tasks implements LoggerAwareInterface, ConfigAwareInterfa
     use PhpmdTaskLoader;
     use PHPUnitTaskLoader;
 
+    /**
+     * @var array<string, mixed>
+     */
     protected array $composerInfo = [];
 
     protected string $packageVendor = '';
@@ -65,7 +70,7 @@ class RoboFile extends Tasks implements LoggerAwareInterface, ConfigAwareInterfa
     /**
      * @hook pre-command @initLintReporters
      */
-    public function initLintReporters()
+    public function initLintReporters(): void
     {
         $container = $this->getContainer();
         if (!($container instanceof LeagueContainer)) {
@@ -135,13 +140,9 @@ class RoboFile extends Tasks implements LoggerAwareInterface, ConfigAwareInterfa
     /**
      * Run the Robo unit tests.
      */
-    public function test(
-        array $suiteNames,
-        array $options = [
-            'php' => 'coverage_reporter_pcov',
-        ]
-    ): CollectionBuilder {
-        return $this->getTaskPhpunitRun($suiteNames, $options['php']);
+    public function test(array $suiteNames): CollectionBuilder
+    {
+        return $this->getTaskPhpunitRun($suiteNames);
     }
 
     protected function errorOutput(): ?OutputInterface
@@ -319,19 +320,31 @@ class RoboFile extends Tasks implements LoggerAwareInterface, ConfigAwareInterfa
         return $task;
     }
 
-    protected function getTaskPhpunitRun(
-        array $suiteNames = [],
-        string $phpExecutableKey = 'coverage_reporter_pcov'
-    ): CollectionBuilder {
+    protected function getTaskPhpunitRun(array $suiteNames = []): CollectionBuilder
+    {
+        $phpExecutables = array_filter(
+            (array) $this->getConfig()->get('php.executables'),
+            new ArrayFilterEnabled(),
+        );
+
+        $cb = $this->collectionBuilder();
+        foreach ($phpExecutables as $php) {
+            $cb->addTask($this->getTaskPhpunitRunSingle($suiteNames, $php));
+        }
+
+        return $cb;
+    }
+
+    protected function getTaskPhpunitRunSingle(array $suiteNames, array $php): TaskInterface
+    {
         $binDir = $this->composerInfo['config']['bin-dir'];
-        $phpExecutable = $this->getPhpExecutable($phpExecutableKey);
 
         return $this
             ->taskPHPUnitRun()
-            ->setEnvVars($phpExecutable['envVars'])
+            ->setEnvVars($php['envVars'] ?? [])
             ->setColors('always')
             ->setHideStdOutput(false)
-            ->setPhpExecutable($phpExecutable['binary'])
+            ->setPhpExecutable($php['command'])
             ->setPhpunitExecutable("$binDir/phpunit")
             ->setTestSuite($suiteNames);
     }
