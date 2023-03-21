@@ -4,15 +4,20 @@ declare(strict_types = 1);
 
 namespace Sweetchuck\CacheBackend\ArangoDb\Serializer;
 
+/**
+ * @psalm-import-type NativeSerializerUnserializeOptions from \Sweetchuck\CacheBackend\ArangoDb\PsalmTypes
+ * @psalm-import-type NativeSerializerOptions            from \Sweetchuck\CacheBackend\ArangoDb\PsalmTypes
+ */
 class NativeSerializer extends BaseSerializer
 {
 
-    /**
-     * {@inheritdoc}
-     */
-    protected $engine = 'native';
+    protected string $engine = 'native';
 
-    public function setOptions(array $options)
+    /**
+     * @phpstan-param CacheBackendArangoDbNativeSerializerOptions $options
+     * @psalm-param NativeSerializerOptions $options
+     */
+    public function setOptions(array $options): static
     {
         if (array_key_exists('unserializeOptions', $options)) {
             $this->setUnserializeOptions($options['unserializeOptions']);
@@ -23,26 +28,25 @@ class NativeSerializer extends BaseSerializer
 
     // region unserializeOptions
     /**
-     * @var array
+     * @var array{allowed_classes?: array<array-key, string>|bool}
      */
-    protected $unserializeOptions = [];
+    protected array $unserializeOptions = [];
 
     /**
-     * @return array
+     * @phpstan-return CacheBackendArangoDbNativeSerializerUnserializeOptions
+     * @psalm-return NativeSerializerUnserializeOptions
      */
-    public function getUnserializeOptions()
+    public function getUnserializeOptions(): array
     {
         return $this->unserializeOptions;
     }
 
     /**
-     * @param array $options
-     *
-     * @return $this
+     * @param array{allowed_classes?: array<array-key, string>|bool} $options
      *
      * @see \unserialize()
      */
-    public function setUnserializeOptions($options)
+    public function setUnserializeOptions(array $options): static
     {
         $this->unserializeOptions = $options;
 
@@ -51,9 +55,7 @@ class NativeSerializer extends BaseSerializer
     // endregion
 
     /**
-     * @param mixed $value
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function serialize($value)
     {
@@ -61,9 +63,7 @@ class NativeSerializer extends BaseSerializer
     }
 
     /**
-     * @param string $value
-     *
-     * @return mixed
+     * {@inheritdoc}
      */
     public function unserialize($value)
     {

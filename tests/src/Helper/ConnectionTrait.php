@@ -11,29 +11,20 @@ use Sweetchuck\CacheBackend\ArangoDb\CacheItemPool;
 
 /**
  * @method int|string dataName()
- * @method string     getName(bool $withDataSet = true)
+ * @method string     name()
  */
 trait ConnectionTrait
 {
-    /**
-     * @var \ArangoDBClient\Connection
-     */
-    protected static $connection;
+    protected static ?Connection $connection = null;
 
     /**
      * @var \Sweetchuck\CacheBackend\ArangoDb\CacheItemPool[]
      */
-    protected $cachePools = [];
+    protected array $cachePools = [];
 
-    /**
-     * @var string
-     */
-    protected $connectionEnvVarNamePrefix = 'ARANGODB_CACHE_OPTION_';
+    protected string $connectionEnvVarNamePrefix = 'ARANGODB_CACHE_OPTION_';
 
-    /**
-     * @return $this
-     */
-    protected function tearDownConnections()
+    protected function tearDownConnections(): static
     {
         foreach ($this->cachePools as $pool) {
             $pool->removeBin();
@@ -47,13 +38,13 @@ trait ConnectionTrait
         $dataNameSafe = preg_replace(
             '/[^a-z0-9_\-]/i',
             '_',
-            (string) $this->dataName()
+            (string) $this->dataName(),
         );
 
         return sprintf(
             'cache_%s_%s_%s',
             date('Ymd_His'),
-            $this->getName(false) ?: 'unknown',
+            $this->name() ?: 'unknown',
             $dataNameSafe ?: 0,
         );
     }
@@ -67,6 +58,9 @@ trait ConnectionTrait
         return static::$connection;
     }
 
+    /**
+     * @phpstan-return cache-backend-arangodb-schema-collection-options
+     */
     protected function getConnectionOptions(): array
     {
         $default = $this->getConnectionOptionsDefault();
@@ -77,6 +71,9 @@ trait ConnectionTrait
         );
     }
 
+    /**
+     * @phpstan-return cache-backend-arangodb-schema-collection-options
+     */
     protected function getConnectionOptionsDefault(): array
     {
         return [
@@ -85,7 +82,7 @@ trait ConnectionTrait
             ConnectionOptions::OPTION_AUTH_USER => 'root',
             ConnectionOptions::OPTION_AUTH_PASSWD => '',
             ConnectionOptions::OPTION_CONNECTION => 'Close',
-            ConnectionOptions::OPTION_TIMEOUT => 3,
+            ConnectionOptions::OPTION_CONNECT_TIMEOUT => 3,
             ConnectionOptions::OPTION_RECONNECT => true,
             ConnectionOptions::OPTION_UPDATE_POLICY => UpdatePolicy::LAST,
             ConnectionOptions::OPTION_CREATE => true,
@@ -93,10 +90,14 @@ trait ConnectionTrait
         ];
     }
 
+    /**
+     * @param array<string> $keys
+     *
+     * @return array<string, string>
+     */
     protected function getConnectionOptionsEnvVar(array $keys): array
     {
         $options = [];
-        /** @var string $key */
         foreach ($keys as $key) {
             $value = getenv($this->connectionEnvVarNamePrefix . mb_strtoupper($key));
             if ($value === false) {
@@ -110,11 +111,9 @@ trait ConnectionTrait
     }
 
     /**
-     * @return \Sweetchuck\CacheBackend\ArangoDb\CacheItemPool
-     *
      * @see \Cache\IntegrationTests\CachePoolTest::createCachePool
      */
-    public function createCachePool()
+    public function createCachePool(): CacheItemPool
     {
         $connection = $this->getConnection();
         $pool = new CacheItemPool();
@@ -127,11 +126,9 @@ trait ConnectionTrait
     }
 
     /**
-     * @return \Sweetchuck\CacheBackend\ArangoDb\CacheItemPool
-     *
      * @see \Cache\IntegrationTests\SimpleCacheTest::createSimpleCache
      */
-    public function createSimpleCache()
+    public function createSimpleCache(): CacheItemPool
     {
         return $this->createCachePool();
     }

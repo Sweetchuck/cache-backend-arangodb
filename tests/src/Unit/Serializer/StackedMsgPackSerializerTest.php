@@ -12,16 +12,17 @@ use Sweetchuck\CacheBackend\ArangoDb\SerializerInterface;
 /**
  * @covers \Sweetchuck\CacheBackend\ArangoDb\Serializer\StackedSerializer
  * @covers \Sweetchuck\CacheBackend\ArangoDb\Serializer\MsgPackSerializer
+ * @covers \Sweetchuck\CacheBackend\ArangoDb\Serializer\Base64Serializer
  */
 class StackedMsgPackSerializerTest extends SerializeTestBase
 {
 
+    protected string $requiredExtension = 'msgpack';
+
     /**
      * {@inheritdoc}
      */
-    protected $requiredExtension = 'msgpack';
-
-    public function casesInputOutputPairs(): array
+    public static function casesInputOutputPairs(): array
     {
         return [
             'string' => ['abcd', 'pGFiY2Q='],
@@ -29,6 +30,9 @@ class StackedMsgPackSerializerTest extends SerializeTestBase
         ];
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function createInstance(array $options = []): SerializerInterface
     {
         return new StackedSerializer(

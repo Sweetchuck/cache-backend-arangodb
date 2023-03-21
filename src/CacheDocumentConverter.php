@@ -13,22 +13,16 @@ class CacheDocumentConverter implements CacheDocumentConverterInterface
 {
 
     //region documentClass
-    /**
-     * @var string
-     */
-    protected $documentClass = CacheDocument::class;
+    protected string $documentClass = CacheDocument::class;
 
     public function getDocumentClass(): string
     {
         return $this->documentClass ?: Document::class;
     }
 
-    /**
-     * @return $this
-     */
-    public function setDocumentClass(string $class)
+    public function setDocumentClass(string $documentClass): static
     {
-        $this->documentClass = $class;
+        $this->documentClass = $documentClass;
 
         return $this;
     }
@@ -71,7 +65,6 @@ class CacheDocumentConverter implements CacheDocumentConverterInterface
                 'value' => $pool->getSerializer()->serialize($item->get()),
                 'created' => (float) $item->getNow()->format('U.u'),
             ],
-            'update' => [],
         ];
 
         if ($item instanceof HasExpirationTimestampInterface
@@ -94,9 +87,6 @@ class CacheDocumentConverter implements CacheDocumentConverterInterface
         return $bindVars;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function documentFromItem(CacheItemPool $pool, CacheItemInterface $item): Document
     {
         $documentClass = $this->getDocumentClass();

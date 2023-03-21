@@ -22,9 +22,9 @@ class BasicValidator implements ValidatorInterface
 
     // phpcs:disable Generic.Files.LineLength.TooLong
     /**
-     * @var string[][]
+     * @phpstan-var array<string, array<string, string>>
      */
-    protected $messagePatterns = [
+    protected array $messagePatterns = [
         'single' => [
             'symbol_not_string' => 'The {{ type }} identifier has to be provided as string. Actual: {{ symbol_type }}',
             'symbol_not_matches_regex' => 'A cache {{ type }} "{{ symbol }}" must match to pattern {{ pattern }}',
@@ -37,9 +37,18 @@ class BasicValidator implements ValidatorInterface
     // phpcs:enable Generic.Files.LineLength.TooLong
 
     /**
-     * @var string[][]|null[][]|bool[][]
+     * @phpstan-var array{
+     *   key: array{
+     *     pattern: null|string,
+     *     shouldMatch: bool,
+     *   },
+     *   tag: array{
+     *     pattern: null|string,
+     *     shouldMatch: bool,
+     *   },
+     * }
      */
-    protected $symbol = [
+    protected array $symbol = [
         'key' => [
             'pattern' => ValidatorInterface::PSR16_KEY_REGEX_PATTERN,
             'shouldMatch' => ValidatorInterface::PSR16_KEY_REGEX_SHOULD_MATCH,
@@ -55,10 +64,7 @@ class BasicValidator implements ValidatorInterface
         return $this->symbol['key']['pattern'];
     }
 
-    /**
-     * @return $this
-     */
-    public function setKeyRegexPattern(?string $regexPattern)
+    public function setKeyRegexPattern(?string $regexPattern): static
     {
         $this->symbol['key']['pattern'] = $regexPattern;
 
@@ -70,10 +76,7 @@ class BasicValidator implements ValidatorInterface
         return $this->symbol['key']['shouldMatch'];
     }
 
-    /**
-     * @return $this
-     */
-    public function setKeyRegexShouldMatch(bool $shouldMatch)
+    public function setKeyRegexShouldMatch(bool $shouldMatch): static
     {
         $this->symbol['key']['shouldMatch'] = $shouldMatch;
 
@@ -85,10 +88,7 @@ class BasicValidator implements ValidatorInterface
         return $this->symbol['tag']['pattern'];
     }
 
-    /**
-     * @return $this
-     */
-    public function setTagRegexPattern(?string $regexPattern)
+    public function setTagRegexPattern(?string $regexPattern): static
     {
         $this->symbol['tag']['pattern'] = $regexPattern;
 
@@ -100,10 +100,7 @@ class BasicValidator implements ValidatorInterface
         return $this->symbol['tag']['shouldMatch'];
     }
 
-    /**
-     * @return $this
-     */
-    public function setTagRegexShouldMatch(bool $shouldMatch)
+    public function setTagRegexShouldMatch(bool $shouldMatch): static
     {
         $this->symbol['tag']['shouldMatch'] = $shouldMatch;
 
@@ -111,9 +108,9 @@ class BasicValidator implements ValidatorInterface
     }
 
     /**
-     * @return $this
+     * @phpstan-param cache-backend-arangodb-basic-validator-options $options
      */
-    public function setOptions(array $options)
+    public function setOptions(array $options): static
     {
         if (array_key_exists('keyRegexPattern', $options)) {
             $this->setKeyRegexPattern($options['keyRegexPattern']);
@@ -137,15 +134,12 @@ class BasicValidator implements ValidatorInterface
     /**
      * {@inheritdoc}
      */
-    public function validateKey($key, ?string $index = null): array
+    public function validateKey(int|string $key, ?string $index = null): array
     {
-        return $this->validateSymbol('key', $key, $index);
+        return $this->validateSymbol('key', (string) $key, $index);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function assertKey($key, ?string $index = null)
+    public function assertKey(int|string $key, ?string $index = null): static
     {
         return $this->assert($this->validateKey($key, $index));
     }
@@ -153,7 +147,7 @@ class BasicValidator implements ValidatorInterface
     /**
      * {@inheritdoc}
      */
-    public function assertKeys($keys)
+    public function assertKeys(iterable $keys): static
     {
         return $this->assertSymbols('key', $keys);
     }
@@ -161,18 +155,15 @@ class BasicValidator implements ValidatorInterface
     /**
      * {@inheritdoc}
      */
-    public function validateValues($values): array
+    public function validateValues(iterable $values): array
     {
-        $errors = [];
-        if (!is_iterable($values)) {
-            // @todo Add to $this->$messagePatterns.
-            $errors[] = '$values has to be an iterable. Actual: ' . Utils::getDataType($values);
-        }
-
-        return $errors;
+        return [];
     }
 
-    public function assertValues($values)
+    /**
+     * {@inheritdoc}
+     */
+    public function assertValues(iterable $values): static
     {
         return $this->assert($this->validateValues($values));
     }
@@ -180,15 +171,12 @@ class BasicValidator implements ValidatorInterface
     /**
      * {@inheritdoc}
      */
-    public function validateTag($tag, ?string $index = null): array
+    public function validateTag(string $tag, ?string $index = null): array
     {
         return $this->validateSymbol('tag', $tag, $index);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function assertTag($key, ?string $index = null)
+    public function assertTag(string $key, ?string $index = null): static
     {
         return $this->assert($this->validateTag($key, $index));
     }
@@ -196,34 +184,17 @@ class BasicValidator implements ValidatorInterface
     /**
      * {@inheritdoc}
      */
-    public function assertTags($tags)
+    public function assertTags(iterable $tags): static
     {
-        if ($tags === null) {
-            return $this;
-        }
-
         return $this->assertSymbols('tag', $tags);
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function validateTtl($ttl): array
+    public function validateTtl(null|int|float|\DateInterval $ttl): array
     {
-        if (is_null($ttl) || is_int($ttl) || $ttl instanceof \DateInterval) {
-            return [];
-        }
-
-        return [
-            // @todo Add to $this->$messagePatterns.
-            '@param null|int|\DateInterval $ttl. Actual: ' . Utils::getDataType($ttl),
-        ];
+        return [];
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function assertTtl($ttl)
+    public function assertTtl(null|int|float|\DateInterval $ttl): static
     {
         $errors = $this->validateTtl($ttl);
 
@@ -231,14 +202,9 @@ class BasicValidator implements ValidatorInterface
     }
 
     /**
-     *
-     * @param string $type
-     * @param mixed $symbol
-     * @param null|int|float|string $index
-     *
      * @return string[]
      */
-    protected function validateSymbol(string $type, $symbol, $index = null): array
+    protected function validateSymbol(string $type, string $symbol, mixed $index = null): array
     {
         assert(array_key_exists($type, $this->symbol), 'symbol type has to be one of "key" or "tag"');
         $pattern = $this->symbol[$type]['pattern'];
@@ -275,14 +241,7 @@ class BasicValidator implements ValidatorInterface
         return $errors;
     }
 
-    /**
-     * @param string $type
-     * @param mixed $symbol
-     * @param int|float|string $index
-     *
-     * @return $this
-     */
-    protected function assertSymbol(string $type, $symbol, $index)
+    protected function assertSymbol(string $type, string $symbol, mixed $index = null): static
     {
         $errors = $this->validateSymbol($type, $symbol, $index);
 
@@ -290,12 +249,9 @@ class BasicValidator implements ValidatorInterface
     }
 
     /**
-     * @param string $type
-     * @param mixed $symbols
-     *
-     * @return $this
+     * @param iterable<string> $symbols
      */
-    protected function assertSymbols(string $type, $symbols)
+    protected function assertSymbols(string $type, iterable $symbols): static
     {
         if (!is_iterable($symbols)) {
             $message = '${{ type }}s has to be an iterable. Actual: {{ actual }}';
@@ -306,10 +262,6 @@ class BasicValidator implements ValidatorInterface
             throw new CacheInvalidArgumentException(strtr($message, $args));
         }
 
-        /**
-         * @var int|float|string $index
-         * @var mixed $symbol
-         */
         foreach ($symbols as $index => $symbol) {
             $this->assertSymbol($type, $symbol, $index);
         }
@@ -318,9 +270,9 @@ class BasicValidator implements ValidatorInterface
     }
 
     /**
-     * @return $this
+     * @param string[] $errors
      */
-    protected function assert(array $errors)
+    protected function assert(array $errors): static
     {
         if ($errors) {
             throw new CacheInvalidArgumentException($this->errorsToMessage($errors));
@@ -329,6 +281,9 @@ class BasicValidator implements ValidatorInterface
         return $this;
     }
 
+    /**
+     * @param string[] $errors
+     */
     protected function errorsToMessage(array $errors): string
     {
         return implode(' - ', $errors);

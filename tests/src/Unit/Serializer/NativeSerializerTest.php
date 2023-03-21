@@ -9,11 +9,12 @@ use Sweetchuck\CacheBackend\ArangoDb\SerializerInterface;
 
 /**
  * @covers \Sweetchuck\CacheBackend\ArangoDb\Serializer\NativeSerializer
+ * @covers \Sweetchuck\CacheBackend\ArangoDb\Serializer\BaseSerializer
  */
 class NativeSerializerTest extends SerializeTestBase
 {
 
-    public function casesInputOutputPairs(): array
+    public static function casesInputOutputPairs(): array
     {
         return [
             'string' => ['abcd', 's:4:"abcd";'],

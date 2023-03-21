@@ -9,6 +9,7 @@ use Sweetchuck\CacheBackend\ArangoDb\SerializerInterface;
 
 /**
  * @covers \Sweetchuck\CacheBackend\ArangoDb\Serializer\LoaferSerializer
+ * @covers \Sweetchuck\CacheBackend\ArangoDb\Serializer\BaseSerializer
  */
 class LoaferSerializerTest extends SerializerTestBase
 {
@@ -18,7 +19,7 @@ class LoaferSerializerTest extends SerializerTestBase
         return new LoaferSerializer();
     }
 
-    public function casesInputOutputPairs(): array
+    public static function casesInputOutputPairs(): array
     {
         return [
             'associative array' => [['a' => 'b'], ['a' => 'b']],

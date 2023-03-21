@@ -12,10 +12,7 @@ namespace Sweetchuck\CacheBackend\ArangoDb\Serializer;
 class Base64Serializer extends BaseSerializer
 {
 
-    /**
-     * {@inheritdoc}
-     */
-    protected $engine = 'base64';
+    protected string $engine = 'base64';
 
     /**
      * @param string $value

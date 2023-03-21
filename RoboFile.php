@@ -113,7 +113,7 @@ class RoboFile extends Tasks implements LoggerAwareInterface, ConfigAwareInterfa
      *
      * @initLintReporters
      */
-    public function lint(): CollectionBuilder
+    public function lint(): TaskInterface
     {
         return $this
             ->collectionBuilder()
@@ -124,7 +124,7 @@ class RoboFile extends Tasks implements LoggerAwareInterface, ConfigAwareInterfa
     /**
      * @initLintReporters
      */
-    public function lintPhpcs(): CollectionBuilder
+    public function lintPhpcs(): TaskInterface
     {
         return $this->getTaskPhpcsLint();
     }
@@ -132,15 +132,31 @@ class RoboFile extends Tasks implements LoggerAwareInterface, ConfigAwareInterfa
     /**
      * @initLintReporters
      */
-    public function lintPhpmd(): CollectionBuilder
+    public function lintPhpmd(): TaskInterface
     {
         return $this->getTaskPhpmdLint();
     }
 
     /**
+     * @initLintReporters
+     */
+    public function lintPsalm(): TaskInterface
+    {
+        return $this->getTaskPsalmLint();
+    }
+
+    /**
+     * @initLintReporters
+     */
+    public function lintPhpstan(): TaskInterface
+    {
+        return $this->getTaskPhpstanAnalyze();
+    }
+
+    /**
      * Run the Robo unit tests.
      */
-    public function test(array $suiteNames): CollectionBuilder
+    public function test(array $suiteNames): TaskInterface
     {
         return $this->getTaskPhpunitRun($suiteNames);
     }
@@ -153,21 +169,20 @@ class RoboFile extends Tasks implements LoggerAwareInterface, ConfigAwareInterfa
             ? $output->getErrorOutput() : $output;
     }
 
-    /**
-     * @return $this
-     */
-    protected function initEnvVarNamePrefix()
+    protected function initEnvVarNamePrefix(): static
     {
-        $this->envVarNamePrefix = strtoupper(str_replace('-', '_',
-            $this->packageName));
+        $this->envVarNamePrefix = strtoupper(
+            str_replace(
+                '-',
+                '_',
+                $this->packageName,
+            ),
+        );
 
         return $this;
     }
 
-    /**
-     * @return $this
-     */
-    protected function initEnvironmentTypeAndName()
+    protected function initEnvironmentTypeAndName(): static
     {
         $this->environmentType = (string) getenv($this->getEnvVarName('environment_type'));
         $this->environmentName = (string) getenv($this->getEnvVarName('environment_name'));
@@ -235,10 +250,7 @@ class RoboFile extends Tasks implements LoggerAwareInterface, ConfigAwareInterfa
         return $definition;
     }
 
-    /**
-     * @return $this
-     */
-    protected function initComposerInfo()
+    protected function initComposerInfo(): static
     {
         $composerFileName = getenv('COMPOSER') ?: 'composer.json';
         if ($this->composerInfo || !is_readable($composerFileName)) {
@@ -295,8 +307,7 @@ class RoboFile extends Tasks implements LoggerAwareInterface, ConfigAwareInterfa
                 ->addTask($this
                     ->taskPhpcsLintInput($options)
                     ->deferTaskConfiguration('setFiles', 'files')
-                    ->deferTaskConfiguration('setIgnore',
-                        'phpcsXml.exclude-patterns'));
+                    ->deferTaskConfiguration('setIgnore', 'phpcsXml.exclude-patterns'));
         }
 
         return $this->taskPhpcsLintFiles($options);
@@ -318,6 +329,29 @@ class RoboFile extends Tasks implements LoggerAwareInterface, ConfigAwareInterfa
         }
 
         return $task;
+    }
+
+    protected function getTaskPsalmLint(): TaskInterface
+    {
+        $cmdPattern = '%s --report=%s';
+        $cmdArgs = [
+            escapeshellcmd("{$this->binDir}/psalm"),
+            escapeshellarg('reports/human/checkstyle/psalm.txt')
+        ];
+
+        return $this->taskExec(vsprintf($cmdPattern, $cmdArgs));
+    }
+
+    protected function getTaskPhpstanAnalyze(): TaskInterface
+    {
+        $cmdPattern = '%s --error-format=%s > %s';
+        $cmdArgs = [
+            escapeshellcmd("{$this->binDir}/phpstan"),
+            escapeshellarg('table'),
+            escapeshellarg('reports/human/checkstyle/phpstan.txt'),
+        ];
+
+        return $this->taskExec(vsprintf($cmdPattern, $cmdArgs));
     }
 
     protected function getTaskPhpunitRun(array $suiteNames = []): CollectionBuilder

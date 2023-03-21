@@ -11,13 +11,14 @@ class SchemaManager implements SchemaManagerInterface
 {
 
     // region collectionOptions
-    /**
-     * @var array
-     */
-    protected $collectionOptions = [];
 
     /**
-     * @return array
+     * @phpstan-var cache-backend-arangodb-schema-collection-options
+     */
+    protected array $collectionOptions = [];
+
+    /**
+     * @phpstan-return cache-backend-arangodb-schema-collection-options
      *
      * @see \ArangoDBClient\CollectionHandler::create()
      */
@@ -27,11 +28,11 @@ class SchemaManager implements SchemaManagerInterface
     }
 
     /**
-     * @return $this
+     * @phpstan-param cache-backend-arangodb-schema-collection-options $options
      *
      * @see \ArangoDBClient\CollectionHandler::create()
      */
-    public function setCollectionOptions(array $options)
+    public function setCollectionOptions(array $options): static
     {
         $this->collectionOptions = $options;
 
@@ -41,9 +42,9 @@ class SchemaManager implements SchemaManagerInterface
 
     //region indexDefinitions
     /**
-     * @var array[]
+     * @phpstan-var array<string, cache-backend-arangodb-schema-index-definition>
      */
-    protected $indexDefinitions = [
+    protected array $indexDefinitions = [
         'idx_key' => [
             'name' => 'idx_key',
             CollectionHandler::OPTION_TYPE => CollectionHandler::OPTION_HASH_INDEX,
@@ -69,19 +70,22 @@ class SchemaManager implements SchemaManagerInterface
         ],
     ];
 
+    /**
+     * @phpstan-return array<string, cache-backend-arangodb-schema-index-definition>
+     */
     public function getIndexDefinitions(): array
     {
         return $this->indexDefinitions;
     }
 
     /**
-     * @return $this
+     * @phpstan-param array<string, cache-backend-arangodb-schema-index-definition> $definitions
      *
      * @see \ArangoDBClient\CollectionHandler::createIndex()
      *
      * @link https://www.arangodb.com/docs/stable/indexing-index-basics.html
      */
-    public function setIndexDefinitions(array $definitions)
+    public function setIndexDefinitions(array $definitions): static
     {
         $this->indexDefinitions = $definitions;
 
@@ -90,14 +94,14 @@ class SchemaManager implements SchemaManagerInterface
     //endregion
 
     /**
-     * @return $this
+     * @phpstan-param cache-backend-arangodb-schema-manager-options $options
      *
      * @see \ArangoDBClient\CollectionHandler::create()
      * @see \ArangoDBClient\CollectionHandler::createIndex()
      *
      * @link https://www.arangodb.com/docs/stable/indexing-index-basics.html
      */
-    public function setOptions(array $options)
+    public function setOptions(array $options): static
     {
         if (array_key_exists('collectionOptions', $options)) {
             $this->setCollectionOptions($options['collectionOptions']);
@@ -110,12 +114,9 @@ class SchemaManager implements SchemaManagerInterface
         return $this;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function createCollection(
         CollectionHandler $collectionHandler,
-        string $collectionName
+        string $collectionName,
     ): Collection {
         if ($collectionHandler->has($collectionName)) {
             return $collectionHandler->get($collectionName);
@@ -130,8 +131,8 @@ class SchemaManager implements SchemaManagerInterface
 
     protected function createIndexes(
         CollectionHandler $collectionHandler,
-        Collection $collection
-    ) {
+        Collection $collection,
+    ): static {
         foreach ($this->indexDefinitions as $definition) {
             $this->createIndex($collectionHandler, $collection, $definition);
         }
@@ -139,11 +140,16 @@ class SchemaManager implements SchemaManagerInterface
         return $this;
     }
 
+    /**
+     * @phpstan-param cache-backend-arangodb-schema-index-definition $definition
+     *
+     * @throws \ArangoDBClient\Exception
+     */
     protected function createIndex(
         CollectionHandler $collectionHandler,
         Collection $collection,
-        array $definition
-    ) {
+        array $definition,
+    ): static {
         if (array_key_exists(CollectionHandler::OPTION_EXPIRE_AFTER, $definition)
             && $definition[CollectionHandler::OPTION_EXPIRE_AFTER] === null
         ) {

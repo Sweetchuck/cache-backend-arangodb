@@ -9,16 +9,14 @@ use Sweetchuck\CacheBackend\ArangoDb\SerializerInterface;
 
 /**
  * @covers \Sweetchuck\CacheBackend\ArangoDb\Serializer\JsonSerializer
+ * @covers \Sweetchuck\CacheBackend\ArangoDb\Serializer\BaseSerializer
  */
 class JsonSerializerTest extends SerializeTestBase
 {
 
-    /**
-     * {@inheritdoc}
-     */
-    protected $requiredExtension = 'json';
+    protected string $requiredExtension = 'json';
 
-    public function casesInputOutputPairs(): array
+    public static function casesInputOutputPairs(): array
     {
         return [
             'string' => ['abcd', '"abcd"'],

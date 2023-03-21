@@ -9,11 +9,12 @@ use Sweetchuck\CacheBackend\ArangoDb\SerializerInterface;
 
 /**
  * @covers \Sweetchuck\CacheBackend\ArangoDb\Serializer\LoaferSerializer
+ * @covers \Sweetchuck\CacheBackend\ArangoDb\Serializer\BaseSerializer
  */
 class LoaferSerializerTest extends SerializeTestBase
 {
 
-    public function casesInputOutputPairs(): array
+    public static function casesInputOutputPairs(): array
     {
         return [
             'string' => ['abcd', 'abcd'],

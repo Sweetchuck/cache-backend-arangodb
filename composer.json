@@ -1,4 +1,5 @@
 {
+    "type": "library",
     "name": "sweetchuck/cache-backend-arangodb",
     "description": "PSR6 compatible cache backend implementation with ArangoDB",
     "license": "GPL-2.0-or-later",
@@ -7,6 +8,22 @@
         "cache",
         "ArangoDB"
     ],
+    "authors": [
+        {
+            "name": "Andor",
+            "role": "Maintainer",
+            "homepage": "https://github.com/Sweetchuck"
+        },
+        {
+            "name": "Contributors",
+            "homepage": "https://github.com/Sweetchuck/cache-backend-arangodb/graphs/contributors"
+        }
+    ],
+    "homepage": "https://github.com/Sweetchuck/cache-backend-arangodb",
+    "support": {
+        "source": "https://github.com/Sweetchuck/cache-backend-arangodb",
+        "issues": "https://github.com/Sweetchuck/cache-backend-arangodb/issues"
+    },
     "minimum-stability": "dev",
     "prefer-stable": true,
     "config": {
@@ -14,33 +31,53 @@
             "composer/package-versions-deprecated": true,
             "sweetchuck/git-hooks": true
         },
-        "optimize-autoloader": false,
+        "optimize-autoloader": true,
         "preferred-install": "dist",
         "sort-packages": true
     },
-    "repositories": {},
+    "repositories": {
+        "cache/adapter-common": {
+            "type": "github",
+            "url": "https://github.com/Sweetchuck-psr-cache/cache-adapter-common.git"
+        },
+        "cache/tag-interop": {
+            "type": "github",
+            "url": "https://github.com/Sweetchuck-psr-cache/cache-tag-interop.git"
+        },
+        "cache/taggable-cache": {
+            "type": "github",
+            "url": "https://github.com/Sweetchuck-psr-cache/cache-taggable-cache.git"
+        },
+        "cache/integration-tests": {
+            "type": "github",
+            "url": "https://github.com/Sweetchuck-psr-cache/cache-integration-tests.git"
+        }
+    },
     "require": {
-        "php": ">=7.4",
-        "cache/adapter-common": "^1.1",
-        "psr/cache": "^1.0",
-        "psr/simple-cache": "^1.0",
+        "php": ">= 8.1",
+        "cache/adapter-common": "3.x-dev",
+        "cache/tag-interop": "3.x-dev",
+        "cache/taggable-cache": "3.x-dev",
+        "psr/cache": "^3.0",
+        "psr/simple-cache": "^3.0",
         "triagens/arangodb": "dev-devel#7254837dafd9aeea3a4006b453283aff9c3507fc"
     },
     "require-dev": {
         "ext-json": "*",
-        "cache/integration-tests": "^0.17",
-        "consolidation/robo": "^3.0",
-        "nuvoleweb/robo-config": "^2.0",
-        "phpunit/phpunit": "^9.0",
+        "cache/integration-tests": "3.x-dev",
+        "consolidation/robo": "^4.0",
+        "nuvoleweb/robo-config": "^3.0",
+        "phpstan/phpstan": "^1.10",
+        "phpunit/phpunit": "^10.0",
         "psr/container": "^1.0",
         "squizlabs/php_codesniffer": "^3.5",
         "sweetchuck/git-hooks": "2.x-dev",
-        "sweetchuck/robo-git": "2.x-dev",
-        "sweetchuck/robo-phpcs": "2.x-dev",
-        "sweetchuck/robo-phpmd": "2.x-dev",
-        "sweetchuck/robo-phpunit": "2.x-dev",
-        "symfony/phpunit-bridge": "^5.0",
-        "vimeo/psalm": "^4.3"
+        "sweetchuck/robo-git": "3.x-dev",
+        "sweetchuck/robo-phpcs": "3.x-dev",
+        "sweetchuck/robo-phpmd": "3.x-dev",
+        "sweetchuck/robo-phpunit": "3.x-dev",
+        "symfony/phpunit-bridge": "^5.0 || ^6.0",
+        "vimeo/psalm": "^5.8"
     },
     "autoload": {
         "psr-4": {

@@ -14,16 +14,10 @@ namespace Sweetchuck\CacheBackend\ArangoDb\Serializer;
 class LoaferSerializer extends BaseSerializer
 {
 
-    /**
-     * {@inheritdoc}
-     */
-    protected $engine = 'loafer';
+    protected string $engine = 'loafer';
 
     /**
-     * @param null|bool|int|float|array $value
-     *   Class free data structure in any depth.
-     *
-     * @return null|bool|int|float|array
+     * {@inheritdoc}
      */
     public function serialize($value)
     {

@@ -12,14 +12,12 @@ use Sweetchuck\CacheBackend\ArangoDb\SerializerInterface;
 /**
  * @covers \Sweetchuck\CacheBackend\ArangoDb\Serializer\IgbinarySerializer
  * @covers \Sweetchuck\CacheBackend\ArangoDb\Serializer\StackedSerializer
+ * @covers \Sweetchuck\CacheBackend\ArangoDb\Serializer\BaseSerializer
  */
 class StackedIgbinarySerializerTest extends SerializerTestBase
 {
 
-    /**
-     * {@inheritdoc}
-     */
-    protected $requiredExtension = 'igbinary';
+    protected string $requiredExtension = 'igbinary';
 
     protected function createSerializer(array $options): SerializerInterface
     {
@@ -29,7 +27,7 @@ class StackedIgbinarySerializerTest extends SerializerTestBase
         );
     }
 
-    public function casesInputOutputPairs(): array
+    public static function casesInputOutputPairs(): array
     {
         return [
             'string' => ['abcd', 'AAAAAhEEYWJjZA=='],

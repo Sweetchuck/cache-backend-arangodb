@@ -1,0 +1,57 @@
+parameters:
+    typeAliases:
+        CacheBackendArangoDbConnectionOptions: '''
+            array<string, mixed>
+        '''
+        CacheBackendArangoDbJsonSerializerOptions: '''
+            array{
+                encodeFlags?: int<1, max>,
+                encodeDepth?: int<1, max>,
+                decodeAssociative?: bool,
+                decodeFlags?: int,
+                decodeDepth?: int<1, max>,
+            }
+        '''
+        cache-backend-arangodb-schema-manager-options: '''
+            array{
+                collectionOptions?: cache-backend-arangodb-schema-collection-options,
+                indexDefinitions?: array<string, cache-backend-arangodb-schema-index-definition>,
+            }
+        '''
+        cache-backend-arangodb-schema-collection-options: '''
+            array<string, mixed>
+        '''
+        cache-backend-arangodb-schema-index-definition: '''
+            array<string, mixed>
+        '''
+        cache-backend-arangodb-execute-statement-data: '''
+            array{
+                batchSize: int,
+                sanitize: bool,
+            }
+        '''
+        cache-backend-arangodb-item-to-upsert-update-bind-vars: '''
+            array{
+                condition: array<string, mixed>,
+                insert: array<string, mixed>,
+                update: array<string, mixed>,
+            }
+        '''
+        cache-backend-arangodb-basic-validator-options: '''
+            array{
+                keyRegexPattern?: string,
+                keyRegexShouldMatch?: bool,
+                tagRegexPattern?: string,
+                tagRegexShouldMatch?: bool,
+            }
+        '''
+        CacheBackendArangoDbNativeSerializerUnserializeOptions: '''
+            array{
+                allowed_classes?: array<array-key, string>|bool,
+            }
+        '''
+        CacheBackendArangoDbNativeSerializerOptions: '''
+            array{
+                unserializeOptions?: CacheBackendArangoDbNativeSerializerUnserializeOptions
+            }
+        '''

@@ -4,28 +4,27 @@ declare(strict_types = 1);
 
 namespace Sweetchuck\CacheBackend\ArangoDb\Tests\Unit\Serializer;
 
-use PHPUnit\Framework\SkippedTestError;
 use PHPUnit\Framework\TestCase;
 use Sweetchuck\CacheBackend\ArangoDb\SerializerInterface;
 
 abstract class SerializeTestBase extends TestCase
 {
 
-    /**
-     * @var string
-     */
-    protected $requiredExtension = '';
+    protected string $requiredExtension = '';
 
-    abstract public function casesInputOutputPairs(): array;
+    /**
+     * @return array<string, mixed>
+     */
+    abstract public static function casesInputOutputPairs(): array;
 
     /**
      * @param mixed $value
      * @param mixed $serialized
-     * @param array $options
+     * @param array<string, mixed> $options
      *
      * @dataProvider casesInputOutputPairs
      */
-    public function testInputOutputPairs($value, $serialized, array $options = []): void
+    public function testInputOutputPairs(mixed $value, mixed $serialized, array $options = []): void
     {
         $this->assertRequiredExtension($this->requiredExtension);
         $serializer = $this->createInstance($options);
@@ -33,17 +32,15 @@ abstract class SerializeTestBase extends TestCase
         static::assertSame($value, $serializer->unserialize($serialized), 'unserialize($serialized) == $value');
     }
 
+    /**
+     * @param array<string, mixed> $options
+     */
     abstract public function createInstance(array $options = []): SerializerInterface;
 
-    /**
-     * @return $this
-     */
-    protected function assertRequiredExtension(string $extensionName)
+    protected static function assertRequiredExtension(string $extensionName): void
     {
         if ($extensionName !== '' && !extension_loaded($extensionName)) {
-            $this->markTestSkipped("required extension '{$extensionName}' is not available");
+            static::markTestSkipped("required extension '{$extensionName}' is not available");
         }
-
-        return $this;
     }
 }

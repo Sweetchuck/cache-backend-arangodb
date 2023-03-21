@@ -11,21 +11,21 @@ interface CacheDocumentConverterInterface
 
     public function getDocumentClass(): string;
 
-    /**
-     * @return $this
-     */
-    public function setDocumentClass(string $documentClass);
+    public function setDocumentClass(string $documentClass): static;
 
     /**
      * @todo Return value should be the neutral \Psr\Cache\CacheItemInterface.
      */
     public function documentToItem(
         CacheItemPool $pool,
-        Document $document
+        Document $document,
     ): CacheItem;
 
+    /**
+     * @phpstan-return cache-backend-arangodb-item-to-upsert-update-bind-vars
+     */
     public function itemToUpsertUpdateBindVars(
         CacheItemPool $pool,
-        CacheItem $item
+        CacheItem $item,
     ): array;
 }

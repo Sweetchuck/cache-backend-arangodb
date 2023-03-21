@@ -5,7 +5,6 @@ declare(strict_types = 1);
 namespace Sweetchuck\CacheBackend\ArangoDb\Tests\Acceptance\Serializer;
 
 use ArangoDBClient\Statement;
-use PHPUnit\Framework\SkippedTestError;
 use PHPUnit\Framework\TestCase;
 use Sweetchuck\CacheBackend\ArangoDb\SerializerInterface;
 use Sweetchuck\CacheBackend\ArangoDb\Tests\Helper\ConnectionTrait;
@@ -24,23 +23,23 @@ abstract class SerializerTestBase extends TestCase
         $this->tearDownConnections();
     }
 
-    /**
-     * @var string
-     */
-    protected $requiredExtension = '';
+    protected string $requiredExtension = '';
 
-    abstract public function casesInputOutputPairs(): array;
+    /**
+     * @return array<string, mixed>
+     */
+    abstract public static function casesInputOutputPairs(): array;
 
     /**
      * @param mixed $value
      * @param mixed $serialized
-     * @param array $options
+     * @param array<string, mixed> $options
      *
      * @dataProvider casesInputOutputPairs
      */
     public function testInputOutputPairs($value, $serialized, array $options = []): void
     {
-        $this->assertRequiredExtension($this->requiredExtension);
+        static::assertRequiredExtension($this->requiredExtension);
 
         $pool = $this->createCachePool();
         $pool->setSerializer($this->createSerializer($options));
@@ -80,17 +79,15 @@ abstract class SerializerTestBase extends TestCase
         static::assertSame($value, $item->get(), 'cache item value');
     }
 
-    /**
-     * @return $this
-     */
-    protected function assertRequiredExtension(string $extensionName)
+    protected static function assertRequiredExtension(string $extensionName): void
     {
         if ($extensionName !== '' && !extension_loaded($extensionName)) {
-            $this->markTestSkipped("required extension '{$extensionName}' is not available");
+            static::markTestSkipped("required extension '{$extensionName}' is not available");
         }
-
-        return $this;
     }
 
+    /**
+     * @param array<string, mixed> $options
+     */
     abstract protected function createSerializer(array $options): SerializerInterface;
 }

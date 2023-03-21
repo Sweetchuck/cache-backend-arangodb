@@ -9,10 +9,7 @@ use Sweetchuck\CacheBackend\ArangoDb\SerializerInterface;
 abstract class BaseSerializer implements SerializerInterface
 {
 
-    /**
-     * @var string
-     */
-    protected $engine = '';
+    protected string $engine = '';
 
     public function getEngine(): string
     {

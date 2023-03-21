@@ -10,11 +10,8 @@ use ArangoDBClient\CollectionHandler;
 interface SchemaManagerInterface
 {
 
-    /**
-     * @return $this
-     */
     public function createCollection(
         CollectionHandler $collectionHandler,
-        string $collectionName
+        string $collectionName,
     ): Collection;
 }

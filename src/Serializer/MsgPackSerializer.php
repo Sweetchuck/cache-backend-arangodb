@@ -7,10 +7,7 @@ namespace Sweetchuck\CacheBackend\ArangoDb\Serializer;
 class MsgPackSerializer extends BaseSerializer
 {
 
-    /**
-     * {@inheritdoc}
-     */
-    protected $engine = 'msgpack';
+    protected string $engine = 'msgpack';
 
     /**
      * @param mixed $value
@@ -19,6 +16,10 @@ class MsgPackSerializer extends BaseSerializer
      */
     public function serialize($value)
     {
+        if (!$this->isAvailable()) {
+            throw new \LogicException();
+        }
+
         return msgpack_serialize($value);
     }
 
@@ -29,6 +30,15 @@ class MsgPackSerializer extends BaseSerializer
      */
     public function unserialize($value)
     {
+        if (!$this->isAvailable()) {
+            throw new \LogicException();
+        }
+
         return msgpack_unserialize($value);
+    }
+
+    protected function isAvailable(): bool
+    {
+        return extension_loaded('msgpack');
     }
 }

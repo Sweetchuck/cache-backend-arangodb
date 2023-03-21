@@ -15,75 +15,47 @@ interface ValidatorInterface
     const PSR16_TAG_REGEX_SHOULD_MATCH = true;
 
     /**
-     * @param mixed $key
-     * @param null|string $index
+     * @todo I think the key can be only string.
      *
      * @return string[]
      */
-    public function validateKey($key, ?string $index = null): array;
+    public function validateKey(int|string $key, ?string $index = null): array;
+
+    public function assertKey(int|string $key, ?string $index = null): static;
 
     /**
-     * @param mixed $key
-     * @param null|string $index
-     *
-     * @return $this
+     * @param iterable<string> $keys
      */
-    public function assertKey($key, ?string $index = null);
+    public function assertKeys(iterable $keys): static;
 
     /**
-     * @param array $keys
-     *
-     * @return $this
-     */
-    public function assertKeys($keys);
-
-    /**
-     * @param mixed $values
+     * @param iterable<mixed> $values
      *
      * @return string[]
      */
-    public function validateValues($values): array;
+    public function validateValues(iterable $values): array;
 
     /**
-     * @param mixed $values
-     *
-     * @return $this
+     * @param iterable<mixed> $values
      */
-    public function assertValues($values);
+    public function assertValues(iterable $values): static;
 
     /**
-     * @param mixed $tag
-     * @param ?string $index
-     *
      * @return string[]
      */
-    public function validateTag($tag, ?string $index = null): array;
+    public function validateTag(string $tag, ?string $index = null): array;
+
+    public function assertTag(string $key, ?string $index = null): static;
 
     /**
-     * @param mixed $key
-     *
-     * @return $this
+     * @param iterable<mixed> $tags
      */
-    public function assertTag($key, ?string $index = null);
+    public function assertTags(iterable $tags): static;
 
     /**
-     * @param mixed $tags
-     *
-     * @return $this
-     */
-    public function assertTags($tags);
-
-    /**
-     * @param mixed $ttl
-     *
      * @return string[]
      */
-    public function validateTtl($ttl): array;
+    public function validateTtl(null|int|float|\DateInterval $ttl): array;
 
-    /**
-     * @param null|int|float|\DateInterval $ttl
-     *
-     * @return $this
-     */
-    public function assertTtl($ttl);
+    public function assertTtl(null|int|float|\DateInterval $ttl): static;
 }

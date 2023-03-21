@@ -19,11 +19,9 @@ class SimpleCacheTest extends SimpleCacheTestBase
     use ConnectionTrait;
 
     /**
-     * @var array
-     *
      * {@inheritdoc}
      */
-    protected $skippedTests = [
+    protected array $skippedTests = [
         'testBinaryData' => 'Not supported',
     ];
 

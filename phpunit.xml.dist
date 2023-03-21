@@ -3,17 +3,19 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
     bootstrap="tests/bootstrap.php"
-    verbose="true"
-    colors="true">
+    colors="true"
+    cacheDirectory=".cache/phpunit">
 
     <php>
         <!-- Set error reporting to E_ALL. -->
         <ini name="error_reporting" value="32767" />
+
         <!-- Do not limit the amount of memory tests take to run. -->
         <ini name="memory_limit" value="-1" />
+
         <!--
-                @see \Sweetchuck\CacheBackend\ArangoDb\Test\Acceptance\ArangoDbCacheItemPoolTest::getConnectionOptions
-            -->
+            @see \Sweetchuck\CacheBackend\ArangoDb\Test\Acceptance\ArangoDbCacheItemPoolTest::getConnectionOptions
+        -->
         <!--<env name="ARANGODB_CACHE_OPTION_ENDPOINT"      value="" />-->
         <!--<env name="ARANGODB_CACHE_OPTION_AUTH_TYPE"     value="" />-->
         <!--<env name="ARANGODB_CACHE_OPTION_AUTHUSER"      value="" />-->
@@ -25,6 +27,12 @@
         <!--<env name="ARANGODB_CACHE_OPTION_CREATE"        value="" />-->
         <!--<env name="ARANGODB_CACHE_OPTION_DATABASE"      value="" />-->
     </php>
+
+    <source>
+        <include>
+            <directory>src/</directory>
+        </include>
+    </source>
 
     <testsuites>
         <testsuite name="Acceptance">
@@ -40,10 +48,7 @@
         <junit outputFile="reports/machine/unit/junit.xml" />
     </logging>
 
-    <coverage processUncoveredFiles="true">
-        <include>
-            <directory>src/</directory>
-        </include>
+    <coverage>
         <report>
             <clover outputFile="reports/machine/coverage/coverage.xml" />
             <html outputDirectory="reports/human/coverage/html" />

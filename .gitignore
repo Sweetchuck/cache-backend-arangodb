@@ -1,8 +1,15 @@
+/.cache/
 
 /reports/
+
 /vendor/
 
 /robo.yml
 
-/.phpunit.result.cache
+/phpcs.xml
+
+/phpstan.neon
+
+/psalm.xml
+
 /phpunit.xml

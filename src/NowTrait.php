@@ -4,33 +4,25 @@ declare(strict_types = 1);
 
 namespace Sweetchuck\CacheBackend\ArangoDb;
 
-use DateTime;
-use DateTimeInterface;
-
 trait NowTrait
 {
-    /**
-     * @var string
-     */
-    protected $nowClass = DateTime::class;
+    protected string $nowClass = \DateTime::class;
 
     public function getNowClass(): string
     {
         return $this->nowClass;
     }
 
-    /**
-     * @return $this
-     */
-    public function setNowClass(string $nowClass)
+    public function setNowClass(string $nowClass): static
     {
         $this->nowClass = $nowClass;
 
         return $this;
     }
 
-    public function getNow(): DateTimeInterface
+    public function getNow(): \DateTimeInterface
     {
+        /** @var \DateTimeInterface $nowClass */
         $nowClass = $this->getNowClass();
 
         return new $nowClass();

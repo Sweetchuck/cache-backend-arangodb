@@ -28,7 +28,10 @@ class TaggableCachePoolTest extends TaggableCachePoolTestBase
         $this->tearDownService();
     }
 
-    public function tearDownService()
+    /**
+     * {@inheritdoc}
+     */
+    public function tearDownService(): void
     {
         parent::tearDownService();
         $this->tearDownConnections();

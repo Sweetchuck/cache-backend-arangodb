@@ -27,22 +27,6 @@ orbs:
 
 .docker:
     php_min: &docker_php_min
-        image: 'cimg/php:7.4'
-        environment:
-            <<: *env_common
-            <<: *env_composer
-            <<: *env_arangodb_common
-            <<: *env_arangodb_client
-
-    php_plus1: &docker_php_plus1
-        image: 'cimg/php:8.0'
-        environment:
-            <<: *env_common
-            <<: *env_composer
-            <<: *env_arangodb_common
-            <<: *env_arangodb_client
-
-    php_plus2: &docker_php_plus2
         image: 'cimg/php:8.1'
         environment:
             <<: *env_common
@@ -50,7 +34,7 @@ orbs:
             <<: *env_arangodb_common
             <<: *env_arangodb_client
 
-    php_plus3: &docker_php_plus3
+    php_plus1: &docker_php_plus1
         image: 'cimg/php:8.2'
         environment:
             <<: *env_common
@@ -58,8 +42,8 @@ orbs:
             <<: *env_arangodb_common
             <<: *env_arangodb_client
 
-    arangodb0307: &docker_arangodb0307
-        image: 'arangodb:3.7.3'
+    arangodb0310: &docker_arangodb0310
+        image: 'arangodb:3.10.4'
         environment:
             <<: *env_arangodb_common
             <<: *env_arangodb_server
@@ -71,43 +55,34 @@ executors:
                 name: 'main'
                 <<: *docker_php_min
 
-    php_min_arangodb0307:
+    php_min_arangodb0310:
         docker:
             -
                 name: 'main'
                 <<: *docker_php_min
             -
                 name: 'arangodb'
-                <<: *docker_arangodb0307
+                <<: *docker_arangodb0310
 
-    php_plus1_arangodb0307:
+    php_plus1_arangodb0310:
         docker:
             -
                 name: 'main'
                 <<: *docker_php_plus1
             -
                 name: 'arangodb'
-                <<: *docker_arangodb0307
-
-    php_plus2_arangodb0307:
-        docker:
-            -
-                name: 'main'
-                <<: *docker_php_plus2
-            -
-                name: 'arangodb'
-                <<: *docker_arangodb0307
-
-    php_plus3_arangodb0307:
-        docker:
-            -
-                name: 'main'
-                <<: *docker_php_plus3
-            -
-                name: 'arangodb'
-                <<: *docker_arangodb0307
+                <<: *docker_arangodb0310
 
 commands:
+    bash_env_init:
+        description: 'BASH_ENV - init'
+        steps:
+            -
+                run:
+                  name: 'BASH_ENV - init'
+                  command: |-
+                    echo "source '${PWD}/'.circleci/app.bash" >> "${BASH_ENV}"
+
     composer_install:
         description: 'Install Composer dependencies with cache restore and save'
         steps:
@@ -139,45 +114,16 @@ commands:
                     command: |
                         "$(composer config bin-dir)/robo" lint
 
-    enable_php_extension:
-        description: 'Enable PHP extension: <<parameters.ext_name>>'
+    php_extension_install_and_enable:
         parameters:
             ext_name:
                 type: 'string'
+        description: 'PHP extension - install and enable - <<parameters.ext_name>>'
         steps:
             -
                 run:
-                    name: 'Enable PHP extension: <<parameters.ext_name>>'
-                    command: |
-                        if php -m | grep '<<parameters.ext_name>>' ; then
-                            exit 0
-                        fi
-
-                        iniDir="$(php -i | grep --only-matching --perl-regexp '(?<=Scan this dir for additional .ini files => ).+')"
-                        mkdir -p "${iniDir}"
-                        sudo ${SHELL} -c "echo 'extension=<<parameters.ext_name>>' > '${iniDir}/<<parameters.ext_name>>.ini'"
-
-    php_extension_igbinary:
-        description: 'PHP extension - igbinary'
-        steps:
-            -
-                run:
-                    name: 'PHP extension - igbinary - install'
-                    command: 'sudo pecl install igbinary'
-            -
-                enable_php_extension:
-                    ext_name: 'igbinary'
-
-    php_extension_msgpack:
-        description: 'PHP extension - msgpack'
-        steps:
-            -
-                run:
-                    name: 'PHP extension - msgpack - install'
-                    command: 'sudo pecl install msgpack'
-            -
-                enable_php_extension:
-                    ext_name: 'msgpack'
+                    name: 'PHP extension - install and enable - <<parameters.ext_name>>'
+                    command: 'app_php_extension_install_and_enable <<parameters.ext_name>>'
 
     arangodb_wait:
         description: 'Wait until ArangoDB ready to serve'
@@ -185,7 +131,7 @@ commands:
             -
                 run:
                     name: 'Wait until ArangoDB ready to serve'
-                    command: '. ./.circleci/arangodb-wait.bash'
+                    command: 'app_arangodb_wait'
 
     arangodb_database_create:
         description: 'Create ArangoDB database'
@@ -193,7 +139,7 @@ commands:
             -
                 run:
                     name: 'Create ArangoDB database'
-                    command: '. ./.circleci/arangodb-database-create.bash'
+                    command: 'app_arangodb_database_create'
 
     test:
         description: 'Run tests'
@@ -218,7 +164,11 @@ commands:
             -
                 run:
                     name: 'Delete all the reports'
-                    command: 'rm -rf ./reports/'
+                    command: |
+                        rm \
+                            --recursive \
+                            --force \
+                            ./reports/
             -
                 run:
                     name: 'Test - acceptance'
@@ -252,8 +202,16 @@ jobs:
         executor: '<<parameters.executor>>'
         steps:
             - 'checkout'
-            - 'php_extension_msgpack'
-            - 'php_extension_igbinary'
+            - 'bash_env_init'
+            -
+                php_extension_install_and_enable:
+                    ext_name: 'pcov'
+            -
+                php_extension_install_and_enable:
+                    ext_name: 'igbinary'
+            -
+                php_extension_install_and_enable:
+                    ext_name: 'msgpack'
             - 'composer_install'
             - 'arangodb_wait'
             - 'arangodb_database_create'
@@ -276,7 +234,5 @@ workflows:
                     matrix:
                         parameters:
                             executor:
-                                - 'php_min_arangodb0307'
-                                - 'php_plus1_arangodb0307'
-                                - 'php_plus2_arangodb0307'
-                                - 'php_plus3_arangodb0307'
+                                - 'php_min_arangodb0310'
+                                - 'php_plus1_arangodb0310'

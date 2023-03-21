@@ -4,13 +4,13 @@ declare(strict_types = 1);
 
 namespace Sweetchuck\CacheBackend\ArangoDb;
 
+use ArangoDBClient\Collection;
 use ArangoDBClient\CollectionHandler;
 use ArangoDBClient\Connection;
 use ArangoDBClient\Cursor;
 use ArangoDBClient\DocumentHandler;
 use ArangoDBClient\Statement;
 use ArangoDBClient\UpdatePolicy;
-use Cache\Adapter\Common\Exception\InvalidArgumentException as CacheInvalidArgumentException;
 use Cache\Adapter\Common\HasExpirationTimestampInterface;
 use Cache\TagInterop\TaggableCacheItemPoolInterface;
 use Psr\Cache\CacheItemInterface;
@@ -25,7 +25,8 @@ use Sweetchuck\CacheBackend\ArangoDb\Serializer\NativeSerializer;
 use Sweetchuck\CacheBackend\ArangoDb\Validator\BasicValidator;
 
 /**
- * @todo Logger.
+ * @psalm-import-type ConnectionOptions    from \Sweetchuck\CacheBackend\ArangoDb\PsalmTypes
+ * @psalm-import-type ExecuteStatementData from \Sweetchuck\CacheBackend\ArangoDb\PsalmTypes
  */
 class CacheItemPool implements
     CacheItemPoolInterface,
@@ -38,34 +39,34 @@ class CacheItemPool implements
     use LoggerAwareTrait;
 
     /**
-     * @var array
+     * @var array<string, array<string, \Sweetchuck\CacheBackend\ArangoDb\CacheItem>>
      */
-    protected static $deferredItems = [];
+    protected static array $deferredItems = [];
 
-    /**
-     * @var string
-     */
-    protected $uri = '';
+    protected string $uri = '';
 
-    //region connectionOptions
+    // region connectionOptions
     /**
      * Keys are \ArangoDBClient\ConnectionOptions::OPTION_*
      *
-     * @see \ArangoDBClient\ConnectionOptions
+     * @phpstan-var CacheBackendArangoDbConnectionOptions
      *
-     * @var array
+     * @see \ArangoDBClient\ConnectionOptions
      */
-    protected $connectionOptions = [];
+    protected array $connectionOptions = [];
 
+    /**
+     * @phpstan-return CacheBackendArangoDbConnectionOptions
+     */
     public function getConnectionOptions(): array
     {
         return $this->connectionOptions;
     }
 
     /**
-     * @return $this
+     * @phpstan-param CacheBackendArangoDbConnectionOptions $connectionOptions
      */
-    public function setConnectionOptions(array $connectionOptions)
+    public function setConnectionOptions(array $connectionOptions): static
     {
         $this->connectionOptions = $connectionOptions;
         $this->initUri();
@@ -73,6 +74,9 @@ class CacheItemPool implements
         return $this;
     }
 
+    /**
+     * @phpstan-return CacheBackendArangoDbConnectionOptions
+     */
     protected function getDefaultConnectionOptions(): array
     {
         return [
@@ -81,7 +85,7 @@ class CacheItemPool implements
             ConnectionOptions::OPTION_AUTH_USER => 'root',
             ConnectionOptions::OPTION_AUTH_PASSWD => '',
             ConnectionOptions::OPTION_CONNECTION => 'Close',
-            ConnectionOptions::OPTION_TIMEOUT => 3,
+            ConnectionOptions::OPTION_CONNECT_TIMEOUT => 3,
             ConnectionOptions::OPTION_RECONNECT => true,
             ConnectionOptions::OPTION_UPDATE_POLICY => UpdatePolicy::LAST,
             ConnectionOptions::OPTION_CREATE => false,
@@ -89,24 +93,24 @@ class CacheItemPool implements
         ];
     }
 
+    /**
+     * @phpstan-return CacheBackendArangoDbConnectionOptions
+     */
     protected function getFinalConnectionOptions(): array
     {
         return $this->getConnectionOptions() + $this->getDefaultConnectionOptions();
     }
-    //endregion
+    // endregion
 
-    //region connection
-    /**
-     * @var \ArangoDBClient\Connection
-     */
-    protected $connection;
+    // region connection
+    protected ?Connection $connection = null;
 
     public function getConnection(): ?Connection
     {
         return $this->connection;
     }
 
-    public function setConnection(?Connection $connection)
+    public function setConnection(?Connection $connection): static
     {
         $this->connection = $connection;
         $this->resetConnection();
@@ -114,10 +118,7 @@ class CacheItemPool implements
         return $this;
     }
 
-    /**
-     * @return $this
-     */
-    protected function initConnection()
+    protected function initConnection(): static
     {
         $collectionName = $this->getCollectionName();
 
@@ -148,7 +149,7 @@ class CacheItemPool implements
         return $this;
     }
 
-    protected function resetConnection()
+    protected function resetConnection(): static
     {
         $this->collectionHandler = null;
         $this->collection = null;
@@ -156,38 +157,23 @@ class CacheItemPool implements
 
         return $this;
     }
-    //endregion
+    // endregion
 
-    /**
-     * @var \ArangoDBClient\Collection
-     */
-    protected $collection;
+    protected ?Collection $collection;
 
-    /**
-     * @var \ArangoDBClient\CollectionHandler
-     */
-    protected $collectionHandler;
+    protected ?CollectionHandler $collectionHandler;
 
-    /**
-     * @var \ArangoDBClient\DocumentHandler
-     */
-    protected $documentHandler;
+    protected ?DocumentHandler $documentHandler;
 
-    //region collectionName
-    /**
-     * @var string
-     */
-    protected $collectionName = 'cache';
+    // region collectionName
+    protected string $collectionName = 'cache';
 
     public function getCollectionName(): string
     {
         return $this->collectionName;
     }
 
-    /**
-     * @return $this
-     */
-    public function setCollectionName(string $collectionName)
+    public function setCollectionName(string $collectionName): static
     {
         if ($collectionName === '') {
             throw new \InvalidArgumentException('ArangoDB collection name can not be empty');
@@ -197,63 +183,51 @@ class CacheItemPool implements
 
         return $this;
     }
-    //endregion
+    // endregion
 
-    /**
-     * @var \Sweetchuck\CacheBackend\ArangoDb\ValidatorInterface
-     */
-    protected $validator;
+    protected ValidatorInterface $validator;
 
     public function getValidator(): ValidatorInterface
     {
         return $this->validator;
     }
 
-    public function setValidator(ValidatorInterface $validator)
+    public function setValidator(ValidatorInterface $validator): static
     {
         $this->validator = $validator;
 
         return $this;
     }
 
-    /**
-     * @var \Sweetchuck\CacheBackend\ArangoDb\CacheDocumentConverterInterface
-     */
-    protected $documentConverter;
+    protected CacheDocumentConverterInterface $documentConverter;
 
     public function getDocumentConverter(): CacheDocumentConverterInterface
     {
         return $this->documentConverter;
     }
 
-    public function setDocumentConverter(CacheDocumentConverterInterface $documentConverter)
+    public function setDocumentConverter(CacheDocumentConverterInterface $documentConverter): static
     {
         $this->documentConverter = $documentConverter;
 
         return $this;
     }
 
-    /**
-     * @var \Sweetchuck\CacheBackend\ArangoDb\SerializerInterface
-     */
-    protected $serializer;
+    protected SerializerInterface $serializer;
 
     public function getSerializer(): SerializerInterface
     {
         return $this->serializer;
     }
 
-    public function setSerializer(SerializerInterface $serializer)
+    public function setSerializer(SerializerInterface $serializer): static
     {
         $this->serializer = $serializer;
 
         return $this;
     }
 
-    /**
-     * @var \Sweetchuck\CacheBackend\ArangoDb\SchemaManagerInterface
-     */
-    protected $schemaManager;
+    protected SchemaManagerInterface $schemaManager;
 
     public function __construct(
         ?ValidatorInterface $validator = null,
@@ -270,11 +244,11 @@ class CacheItemPool implements
         $this->initUri();
     }
 
-    //region \Psr\SimpleCache\CacheInterface
+    // region Implements - \Psr\SimpleCache\CacheInterface
     /**
      * {@inheritdoc}
      */
-    public function has($key)
+    public function has(string $key): bool
     {
         return $this->hasItem($key);
     }
@@ -282,7 +256,7 @@ class CacheItemPool implements
     /**
      * {@inheritdoc}
      */
-    public function get($key, $default = null)
+    public function get(string $key, mixed $default = null): mixed
     {
         $this->validator->assertKey($key);
         $item = $this->getItem($key);
@@ -293,16 +267,13 @@ class CacheItemPool implements
     /**
      * {@inheritdoc}
      */
-    public function getMultiple($keys, $default = null)
+    public function getMultiple(iterable $keys, mixed $default = null): iterable
     {
         if ($keys instanceof \Generator) {
             $keys = Utils::fetchAllValuesFromGenerator($keys);
         }
 
-        if (!is_array($keys)) {
-            throw new CacheInvalidArgumentException('$keys has to be an array');
-        }
-
+        /** @var array<string> $keys */
         $items = [];
         foreach ($this->getItems($keys) as $item) {
             $items[$item->getKey()] = $item->isHit() ? $item->get() : $default;
@@ -314,7 +285,7 @@ class CacheItemPool implements
     /**
      * {@inheritdoc}
      */
-    public function set($key, $value, $ttl = null)
+    public function set(string $key, mixed $value, null|int|\DateInterval $ttl = null): bool
     {
         $this->validator->assertKey($key);
 
@@ -323,22 +294,18 @@ class CacheItemPool implements
 
     /**
      * {@inheritdoc}
+     *
+     * @phpstan-param array<string, mixed> $values
      */
-    public function setMultiple($values, $ttl = null)
+    public function setMultiple(iterable $values, null|int|\DateInterval $ttl = null): bool
     {
-        $this
-            ->validator
+        $validator = $this->getValidator();
+        $validator
             ->assertValues($values)
             ->assertTtl($ttl);
 
         foreach ($values as $key => $value) {
-            if (is_int($key)
-                || (is_string($key) && preg_match('/^\d+$/', $key))
-            ) {
-                settype($key, 'string');
-            }
-
-            $this->validator->assertKey($key);
+            $validator->assertKey($key);
             $item = new CacheItem($key);
             $item->set($value);
             $item->expiresAfter($ttl);
@@ -354,7 +321,7 @@ class CacheItemPool implements
     /**
      * {@inheritdoc}
      */
-    public function delete($key)
+    public function delete(string $key): bool
     {
         return $this->deleteItem($key);
     }
@@ -362,27 +329,21 @@ class CacheItemPool implements
     /**
      * {@inheritdoc}
      */
-    public function deleteMultiple($keys)
+    public function deleteMultiple(iterable $keys): bool
     {
-        if (!is_iterable($keys)) {
-            throw new CacheInvalidArgumentException('$keys has to be an iterable. Actual: ' . gettype($keys));
-        }
-
         if ($keys instanceof \Generator) {
             $keys = Utils::fetchAllValuesFromGenerator($keys);
         }
 
         return $this->deleteItems($keys);
     }
-    //endregion
+    // endregion
 
-    //region \Psr\Cache\CacheItemPoolInterface
+    // region Implements - \Psr\Cache\CacheItemPoolInterface
     /**
      * {@inheritdoc}
-     *
-     * @return \Sweetchuck\CacheBackend\ArangoDb\CacheItem
      */
-    public function getItem($key)
+    public function getItem(string $key): CacheItem
     {
         $items = $this->getItems([$key]);
 
@@ -392,15 +353,16 @@ class CacheItemPool implements
     /**
      * {@inheritdoc}
      *
-     * @return \Sweetchuck\CacheBackend\ArangoDb\CacheItem[]|\Cache\TagInterop\TaggableCacheItemInterface[]|\Traversable
+     * @phpstan-return iterable<string, \Sweetchuck\CacheBackend\ArangoDb\CacheItem>
      */
-    public function getItems(array $keys = [], bool $allowInvalid = false)
+    public function getItems(array $keys = [], bool $allowInvalid = false): iterable
     {
         $this->validator->assertKeys($keys);
 
         if (!$allowInvalid) {
             $this->garbageCollectionDeferred();
         }
+        /** @var array<string, \Sweetchuck\CacheBackend\ArangoDb\CacheItem> $items */
         $items = array_replace(
             array_fill_keys($keys, null),
             $this->getItemsDeferred($keys),
@@ -419,72 +381,10 @@ class CacheItemPool implements
         return $items;
     }
 
-    protected function getItemsFromStorage(array $keys, bool $allowInvalid): array
-    {
-        if (!$keys) {
-            return [];
-        }
-
-        $this->initConnection();
-        if (!$this->isStorageReadable()) {
-            return [];
-        }
-
-        foreach ($keys as &$key) {
-            settype($key, 'string');
-        }
-
-        $filters = [
-            'doc.key IN @keys',
-        ];
-        $bindVars = [
-            '@collection' => $this->getCollectionName(),
-            'keys' => $keys,
-        ];
-        if (!$allowInvalid) {
-            $filters[] = '(doc.expires == null || doc.expires > @now)';
-            $bindVars['now'] = $this->getNowTimestamp();
-        }
-
-        $filters = implode(' && ', $filters);
-        $query = <<< AQL
-        FOR doc IN @@collection
-            FILTER
-                $filters
-            RETURN doc
-        AQL;
-
-        $result = $this->executeStatement($query, $bindVars);
-        $items = [];
-        foreach ($result as $document) {
-            $item = $this->documentConverter->documentToItem($this, $document, $this->serializer);
-            $item->onFetch();
-            $items[$item->getKey()] = $item;
-        }
-
-        return $items;
-    }
-
-    protected function getItemsDeferred(array $keys): array
-    {
-        /** @var \Sweetchuck\CacheBackend\ArangoDb\CacheItem[] $items */
-        $items = [];
-        foreach ($keys as $key) {
-            if (!isset(static::$deferredItems[$this->uri][$key])) {
-                continue;
-            }
-
-            $items[$key] = clone static::$deferredItems[$this->uri][$key];
-            $items[$key]->onFetch();
-        }
-
-        return $items;
-    }
-
     /**
      * {@inheritdoc}
      */
-    public function deleteItem($key)
+    public function deleteItem(string $key): bool
     {
         return $this->deleteItems([$key]);
     }
@@ -492,7 +392,7 @@ class CacheItemPool implements
     /**
      * {@inheritdoc}
      */
-    public function deleteItems(array $keys)
+    public function deleteItems(array $keys): bool
     {
         $this->validator->assertKeys($keys);
 
@@ -525,7 +425,7 @@ class CacheItemPool implements
     /**
      * {@inheritdoc}
      */
-    public function hasItem($key)
+    public function hasItem(string $key): bool
     {
         $this->validator->assertKey($key);
 
@@ -558,13 +458,13 @@ class CacheItemPool implements
             ],
         );
 
-        return $result ? $result->getCount() === 1 : false;
+        return $result && $result->getCount() === 1;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function save(CacheItemInterface $item)
+    public function save(CacheItemInterface $item): bool
     {
         /** @var \Sweetchuck\CacheBackend\ArangoDb\CacheItem $item */
         $this->validator->assertKey($item->getKey());
@@ -604,13 +504,15 @@ class CacheItemPool implements
             }
         }
 
-        return $result ? true : false;
+        return (bool) $result;
     }
 
     /**
      * {@inheritdoc}
+     *
+     * @phpstan-param \Sweetchuck\CacheBackend\ArangoDb\CacheItem $item
      */
-    public function saveDeferred(CacheItemInterface $item)
+    public function saveDeferred(CacheItemInterface $item): bool
     {
         $key = $item->getKey();
         $this->validator->assertKey($key);
@@ -622,7 +524,7 @@ class CacheItemPool implements
     /**
      * {@inheritdoc}
      */
-    public function commit()
+    public function commit(): bool
     {
         foreach (static::$deferredItems[$this->uri] as $item) {
             if (!$this->save($item)) {
@@ -632,13 +534,13 @@ class CacheItemPool implements
 
         return true;
     }
-    //endregion
+    // endregion
 
-    //region CacheInterface AND CacheItemPoolInterface
+    // region Implements - CacheInterface AND CacheItemPoolInterface
     /**
      * {@inheritdoc}
      */
-    public function clear()
+    public function clear(): bool
     {
         static::$deferredItems[$this->uri] = [];
 
@@ -649,13 +551,13 @@ class CacheItemPool implements
 
         return $this->collectionHandler->truncate($this->collection);
     }
-    //endregion
+    // endregion
 
-    //region \Cache\TagInterop\TaggableCacheItemPoolInterface
+    // region Implements - \Cache\TagInterop\TaggableCacheItemPoolInterface
     /**
      * {@inheritdoc}
      */
-    public function invalidateTag($tag)
+    public function invalidateTag(string $tag): bool
     {
         return $this->invalidateTags([$tag]);
     }
@@ -663,7 +565,7 @@ class CacheItemPool implements
     /**
      * {@inheritdoc}
      */
-    public function invalidateTags(array $tags)
+    public function invalidateTags(array $tags): bool
     {
         if (!$tags) {
             return true;
@@ -694,10 +596,7 @@ class CacheItemPool implements
     }
     //endregion
 
-    /**
-     * @return $this
-     */
-    public function garbageCollection()
+    public function garbageCollection(): static
     {
         $this
             ->garbageCollectionDeferred()
@@ -707,9 +606,80 @@ class CacheItemPool implements
     }
 
     /**
-     * @return $this
+     * @param array<string> $keys
+     *
+     * @return array<string, \Sweetchuck\CacheBackend\ArangoDb\CacheItem>
+     *
+     * @throws \ArangoDBClient\Exception
      */
-    protected function garbageCollectionDeferred()
+    protected function getItemsFromStorage(array $keys, bool $allowInvalid): array
+    {
+        if (!$keys) {
+            return [];
+        }
+
+        $this->initConnection();
+        if (!$this->isStorageReadable()) {
+            return [];
+        }
+
+        foreach ($keys as &$key) {
+            settype($key, 'string');
+        }
+
+        $filters = [
+            'doc.key IN @keys',
+        ];
+        $bindVars = [
+            '@collection' => $this->getCollectionName(),
+            'keys' => $keys,
+        ];
+        if (!$allowInvalid) {
+            $filters[] = '(doc.expires == null || doc.expires > @now)';
+            $bindVars['now'] = $this->getNowTimestamp();
+        }
+
+        $filters = implode(' && ', $filters);
+        $query = <<< AQL
+        FOR doc IN @@collection
+            FILTER
+                $filters
+            RETURN doc
+        AQL;
+
+        $result = $this->executeStatement($query, $bindVars);
+        $items = [];
+        foreach ($result as $document) {
+            $item = $this->documentConverter->documentToItem($this, $document);
+            $item->onFetch();
+            $items[$item->getKey()] = $item;
+        }
+
+        return $items;
+    }
+
+    /**
+     * @param array<string> $keys
+     *
+     * @return array<string, \Sweetchuck\CacheBackend\ArangoDb\CacheItem>
+     */
+    protected function getItemsDeferred(array $keys): array
+    {
+        /** @var \Sweetchuck\CacheBackend\ArangoDb\CacheItem[] $items */
+        $items = [];
+        foreach ($keys as $key) {
+            if (!isset(static::$deferredItems[$this->uri][$key])) {
+                continue;
+            }
+
+            $items[$key] = clone static::$deferredItems[$this->uri][$key];
+            $items[$key]->onFetch();
+        }
+
+        return $items;
+    }
+
+    protected function garbageCollectionDeferred(): static
     {
         $now = $this->getNowTimestamp();
         /** @var \Psr\Cache\CacheItemInterface $item */
@@ -727,10 +697,7 @@ class CacheItemPool implements
         return $this;
     }
 
-    /**
-     * @return $this
-     */
-    protected function garbageCollectionStorage()
+    protected function garbageCollectionStorage(): static
     {
         $this->initConnection();
         if (!$this->isStorageReadable()) {
@@ -763,7 +730,7 @@ class CacheItemPool implements
             && $this->collectionHandler->has($this->collection);
     }
 
-    public function removeBin()
+    public function removeBin(): static
     {
         if ($this->hasBin()) {
             $this->collectionHandler->drop($this->collection);
@@ -772,24 +739,22 @@ class CacheItemPool implements
         $this->collectionHandler = null;
         $this->documentHandler = null;
         $this->collection = null;
+
+        return $this;
     }
 
     /**
-     * @param string $key
-     *
-     * @return $this
+     * @param int|float|string $key
      */
-    public function invalidate($key)
+    public function invalidate(int|float|string $key): static
     {
-        return $this->invalidateMultiple([$key]);
+        return $this->invalidateMultiple([(string) $key]);
     }
 
     /**
-     * @param string[] $keys
-     *
-     * @return $this
+     * @phpstan-param array<int|float|string> $keys
      */
-    public function invalidateMultiple(array $keys)
+    public function invalidateMultiple(array $keys): static
     {
         if (!$keys) {
             return $this;
@@ -823,7 +788,7 @@ class CacheItemPool implements
         return $this;
     }
 
-    public function invalidateAll()
+    public function invalidateAll(): static
     {
         $this->initConnection();
         if (!$this->isStorageWritable()) {
@@ -850,7 +815,7 @@ class CacheItemPool implements
         return $this;
     }
 
-    protected function initUri()
+    protected function initUri(): static
     {
         $options = $this->getFinalConnectionOptions();
         $this->uri = sprintf(
@@ -887,6 +852,11 @@ class CacheItemPool implements
         return false;
     }
 
+    /**
+     * @param array<string, mixed> $bindVars
+     *
+     * @throws \ArangoDBClient\Exception
+     */
     protected function executeStatement(string $query, array $bindVars): ?Cursor
     {
         $statement = new Statement(
@@ -906,6 +876,10 @@ class CacheItemPool implements
         return $result;
     }
 
+    /**
+     * @phpstan-return cache-backend-arangodb-execute-statement-data
+     * @psalm-return ExecuteStatementData
+     */
     protected function getExecuteStatementData(): array
     {
         return [

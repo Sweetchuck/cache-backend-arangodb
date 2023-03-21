@@ -9,21 +9,19 @@ use Sweetchuck\CacheBackend\ArangoDb\SerializerInterface;
 
 /**
  * @covers \Sweetchuck\CacheBackend\ArangoDb\Serializer\JsonSerializer
+ * @covers \Sweetchuck\CacheBackend\ArangoDb\Serializer\BaseSerializer
  */
 class JsonSerializerTest extends SerializerTestBase
 {
 
-    /**
-     * {@inheritdoc}
-     */
-    protected $requiredExtension = 'json';
+    protected string $requiredExtension = 'json';
 
     protected function createSerializer(array $options): SerializerInterface
     {
         return (new JsonSerializer())->setOptions($options);
     }
 
-    public function casesInputOutputPairs(): array
+    public static function casesInputOutputPairs(): array
     {
         return [
             'associative array' => [['a' => 'b'], '{"a":"b"}'],

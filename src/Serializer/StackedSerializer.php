@@ -12,7 +12,7 @@ class StackedSerializer extends BaseSerializer
     /**
      * @var \Sweetchuck\CacheBackend\ArangoDb\SerializerInterface[]
      */
-    protected $serializers = [];
+    protected array $serializers = [];
 
     /**
      * @return \Sweetchuck\CacheBackend\ArangoDb\SerializerInterface[]
@@ -24,10 +24,8 @@ class StackedSerializer extends BaseSerializer
 
     /**
      * @param \Sweetchuck\CacheBackend\ArangoDb\SerializerInterface[] $serializers
-     *
-     * @return $this
      */
-    public function setSerializers(array $serializers)
+    public function setSerializers(array $serializers): static
     {
         $this->serializers = array_values($serializers);
         $this->updateEngine();
@@ -35,7 +33,7 @@ class StackedSerializer extends BaseSerializer
         return $this;
     }
 
-    public function addSerializer(SerializerInterface $serializer)
+    public function addSerializer(SerializerInterface $serializer): static
     {
         $this->serializers[] = $serializer;
         $this->updateEngine();
@@ -48,10 +46,7 @@ class StackedSerializer extends BaseSerializer
         $this->setSerializers($serializers);
     }
 
-    /**
-     * @return $this
-     */
-    protected function updateEngine()
+    protected function updateEngine(): static
     {
         $engines = [];
         foreach ($this->getSerializers() as $serializer) {
@@ -63,9 +58,7 @@ class StackedSerializer extends BaseSerializer
     }
 
     /**
-     * @param mixed $value
-     *
-     * @return mixed
+     * {@inheritdoc}
      */
     public function serialize($value)
     {
@@ -78,9 +71,7 @@ class StackedSerializer extends BaseSerializer
     }
 
     /**
-     * @param mixed $value
-     *
-     * @return mixed
+     * {@inheritdoc}
      */
     public function unserialize($value)
     {

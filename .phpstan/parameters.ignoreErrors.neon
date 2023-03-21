@@ -1,0 +1,21 @@
+parameters:
+    ignoreErrors:
+        -
+            message: "#^Parameter \\#1 \\$expiration of method Sweetchuck\\\\CacheBackend\\\\ArangoDb\\\\CacheItem\\:\\:expiresAt\\(\\) expects DateTimeInterface\\|null, DateTime\\|false given\\.$#"
+            count: 1
+            path: ../src/CacheDocumentConverter.php
+
+        -
+            message: "#^Call to an undefined method DateTimeInterface\\:\\:add\\(\\)\\.$#"
+            count: 1
+            path: ../src/CacheItem.php
+
+        -
+            message: "#^Method Sweetchuck\\\\CacheBackend\\\\ArangoDb\\\\CacheItemPool\\:\\:getItem\\(\\) should return Sweetchuck\\\\CacheBackend\\\\ArangoDb\\\\CacheItem but returns Sweetchuck\\\\CacheBackend\\\\ArangoDb\\\\CacheItem\\|false\\.$#"
+            count: 1
+            path: ../src/CacheItemPool.php
+
+        -
+            message: "#^Parameter \\#1 \\$keys of method Sweetchuck\\\\CacheBackend\\\\ArangoDb\\\\CacheItemPool\\:\\:deleteItems\\(\\) expects array\\<string\\>, array\\|iterable\\<string\\> given\\.$#"
+            count: 1
+            path: ../src/CacheItemPool.php

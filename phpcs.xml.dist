@@ -16,5 +16,5 @@
 
     <file>./src/</file>
     <file>./tests/</file>
-<!--    <file>./RoboFile.php</file>-->
+    <file>./RoboFile.php</file>
 </ruleset>

@@ -7,22 +7,19 @@ namespace Sweetchuck\CacheBackend\ArangoDb\Serializer;
 class JsonSerializer extends BaseSerializer
 {
 
-    /**
-     * {@inheritdoc}
-     */
-    protected $engine = 'json';
+    protected string $engine = 'json';
 
     /**
-     * @return $this
+     * @phpstan-param CacheBackendArangoDbJsonSerializerOptions $options
      */
-    public function setOptions(array $options)
+    public function setOptions(array $options): static
     {
         if (array_key_exists('encodeFlags', $options)) {
             $this->setEncodeFlags($options['encodeFlags']);
         }
 
         if (array_key_exists('encodeDepth', $options)) {
-            $this->setEncodeFlags($options['encodeDepth']);
+            $this->setEncodeDepth($options['encodeDepth']);
         }
 
         if (array_key_exists('decodeAssociative', $options)) {
@@ -41,10 +38,7 @@ class JsonSerializer extends BaseSerializer
     }
 
     // region encodeFlags
-    /**
-     * @var int
-     */
-    protected $encodeFlags = 0;
+    protected int $encodeFlags = 0;
 
     public function getEncodeFlags(): int
     {
@@ -52,11 +46,9 @@ class JsonSerializer extends BaseSerializer
     }
 
     /**
-     * @return $this
-     *
      * @see \json_encode()
      */
-    public function setEncodeFlags(int $encodeFlags)
+    public function setEncodeFlags(int $encodeFlags): static
     {
         $this->encodeFlags = $encodeFlags;
 
@@ -66,21 +58,24 @@ class JsonSerializer extends BaseSerializer
 
     // region encodeDepth
     /**
-     * @var int
+     * @var int<1, max>
      */
-    protected $encodeDepth = 512;
+    protected int $encodeDepth = 512;
 
+    /**
+     * @return int<1, max>
+     */
     public function getEncodeDepth(): int
     {
         return $this->encodeDepth;
     }
 
     /**
-     * @return $this
+     * @param int<1, max> $encodeDepth
      *
      * @see \json_encode()
      */
-    public function setEncodeDepth(int $encodeDepth)
+    public function setEncodeDepth(int $encodeDepth): static
     {
         $this->encodeDepth = $encodeDepth;
 
@@ -89,10 +84,7 @@ class JsonSerializer extends BaseSerializer
     // endregion
 
     // region decodeAssociative
-    /**
-     * @var bool
-     */
-    protected $decodeAssociative = true;
+    protected bool $decodeAssociative = true;
 
     public function getDecodeAssociative(): bool
     {
@@ -100,11 +92,9 @@ class JsonSerializer extends BaseSerializer
     }
 
     /**
-     * @return $this
-     *
      * @see \json_decode()
      */
-    public function setDecodeAssociative(bool $decodeAssociative)
+    public function setDecodeAssociative(bool $decodeAssociative): static
     {
         $this->decodeAssociative = $decodeAssociative;
 
@@ -113,20 +103,14 @@ class JsonSerializer extends BaseSerializer
     // endregion
 
     // region decodeFlags
-    /**
-     * @var int
-     */
-    protected $decodeFlags = 0;
+    protected int $decodeFlags = 0;
 
     public function getDecodeFlags(): int
     {
         return $this->decodeFlags;
     }
 
-    /**
-     * @return $this
-     */
-    public function setDecodeFlags(int $decodeFlags)
+    public function setDecodeFlags(int $decodeFlags): static
     {
         $this->decodeFlags = $decodeFlags;
 
@@ -136,19 +120,22 @@ class JsonSerializer extends BaseSerializer
 
     // region decodeDepth
     /**
-     * @var int
+     * @var int<1, max>
      */
-    protected $decodeDepth = 512;
+    protected int $decodeDepth = 512;
 
+    /**
+     * @return int<1, max>
+     */
     public function getDecodeDepth(): int
     {
         return $this->decodeDepth;
     }
 
     /**
-     * @return $this
+     * @param  int<1, max> $decodeDepth
      */
-    public function setDecodeDepth(int $decodeDepth)
+    public function setDecodeDepth(int $decodeDepth): static
     {
         $this->decodeDepth = $decodeDepth;
 
@@ -163,22 +150,24 @@ class JsonSerializer extends BaseSerializer
      */
     public function serialize($value)
     {
-        return json_encode(
+        $result = json_encode(
             $value,
             $this->getEncodeFlags(),
             $this->getEncodeDepth(),
         );
+
+        return $result === false ?
+            '{}'
+            : $result;
     }
 
     /**
-     * @param string $value
-     *
-     * @return mixed
+     * {@inheritdoc}
      */
     public function unserialize($value)
     {
         return json_decode(
-            $value,
+            (string) $value,
             $this->getDecodeAssociative(),
             $this->getDecodeDepth(),
             $this->getDecodeFlags(),
