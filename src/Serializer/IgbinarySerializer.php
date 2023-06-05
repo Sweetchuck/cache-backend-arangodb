@@ -9,6 +9,11 @@ class IgbinarySerializer extends BaseSerializer
 
     protected string $engine = 'igbinary';
 
+    public function isAvailable(): bool
+    {
+        return extension_loaded('igbinary');
+    }
+
     /**
      * @param mixed $value
      *
@@ -35,10 +40,5 @@ class IgbinarySerializer extends BaseSerializer
         }
 
         return igbinary_unserialize($value);
-    }
-
-    protected function isAvailable(): bool
-    {
-        return extension_loaded('igbinary');
     }
 }

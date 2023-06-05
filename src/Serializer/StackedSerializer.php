@@ -46,6 +46,17 @@ class StackedSerializer extends BaseSerializer
         $this->setSerializers($serializers);
     }
 
+    public function isAvailable(): bool
+    {
+        foreach ($this->getSerializers() as $serializer) {
+            if (!$serializer->isAvailable()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     protected function updateEngine(): static
     {
         $engines = [];
@@ -62,6 +73,10 @@ class StackedSerializer extends BaseSerializer
      */
     public function serialize($value)
     {
+        if (!$this->isAvailable()) {
+            throw new \LogicException();
+        }
+
         $result = $value;
         foreach ($this->getSerializers() as $serializer) {
             $result = $serializer->serialize($result);
@@ -75,6 +90,10 @@ class StackedSerializer extends BaseSerializer
      */
     public function unserialize($value)
     {
+        if (!$this->isAvailable()) {
+            throw new \LogicException();
+        }
+
         $result = $value;
         $serializers = $this->getSerializers();
         $count = count($serializers);

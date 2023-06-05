@@ -6,12 +6,12 @@ namespace Sweetchuck\CacheBackend\ArangoDb;
 
 use ArangoDBClient\Collection;
 use ArangoDBClient\CollectionHandler;
+use ArangoDBClient\Exception;
 
 class SchemaManager implements SchemaManagerInterface
 {
 
     // region collectionOptions
-
     /**
      * @phpstan-var cache-backend-arangodb-schema-collection-options
      */
@@ -114,6 +114,9 @@ class SchemaManager implements SchemaManagerInterface
         return $this;
     }
 
+    /**
+     * @throws \ArangoDBClient\Exception
+     */
     public function createCollection(
         CollectionHandler $collectionHandler,
         string $collectionName,
@@ -129,11 +132,14 @@ class SchemaManager implements SchemaManagerInterface
         return $collection;
     }
 
+    /**
+     * @throws \ArangoDBClient\Exception
+     */
     protected function createIndexes(
         CollectionHandler $collectionHandler,
         Collection $collection,
     ): static {
-        foreach ($this->indexDefinitions as $definition) {
+        foreach ($this->getIndexDefinitions() as $definition) {
             $this->createIndex($collectionHandler, $collection, $definition);
         }
 
@@ -156,7 +162,10 @@ class SchemaManager implements SchemaManagerInterface
             return $this;
         }
 
-        $collectionHandler->createIndex($collection, $definition);
+        try {
+            $collectionHandler->createIndex($collection, $definition);
+        } catch (\Exception) {
+        }
 
         return $this;
     }

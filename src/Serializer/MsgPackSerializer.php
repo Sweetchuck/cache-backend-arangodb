@@ -9,6 +9,11 @@ class MsgPackSerializer extends BaseSerializer
 
     protected string $engine = 'msgpack';
 
+    public function isAvailable(): bool
+    {
+        return extension_loaded('msgpack');
+    }
+
     /**
      * @param mixed $value
      *
@@ -35,10 +40,5 @@ class MsgPackSerializer extends BaseSerializer
         }
 
         return msgpack_unserialize($value);
-    }
-
-    protected function isAvailable(): bool
-    {
-        return extension_loaded('msgpack');
     }
 }

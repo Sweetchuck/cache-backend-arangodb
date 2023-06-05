@@ -15,4 +15,9 @@ abstract class BaseSerializer implements SerializerInterface
     {
         return $this->engine;
     }
+
+    public function isAvailable(): bool
+    {
+        return true;
+    }
 }

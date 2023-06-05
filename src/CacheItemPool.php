@@ -25,8 +25,8 @@ use Sweetchuck\CacheBackend\ArangoDb\Serializer\NativeSerializer;
 use Sweetchuck\CacheBackend\ArangoDb\Validator\BasicValidator;
 
 /**
- * @psalm-import-type ConnectionOptions    from \Sweetchuck\CacheBackend\ArangoDb\PsalmTypes
- * @psalm-import-type ExecuteStatementData from \Sweetchuck\CacheBackend\ArangoDb\PsalmTypes
+ * @psalm-import-type ArangoDbConnectionOptions from \Sweetchuck\CacheBackend\ArangoDb\PsalmTypes
+ * @psalm-import-type ExecuteStatementData      from \Sweetchuck\CacheBackend\ArangoDb\PsalmTypes
  */
 class CacheItemPool implements
     CacheItemPoolInterface,

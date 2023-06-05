@@ -15,6 +15,8 @@ interface SerializerInterface
 
     public function getEngine(): string;
 
+    public function isAvailable(): bool;
+
     /**
      * @param mixed $value
      *
