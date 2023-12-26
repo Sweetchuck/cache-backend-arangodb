@@ -207,6 +207,8 @@ class CacheItem implements PhpCacheItem
 
     /**
      * @internal This public method used by the CacheItemPool.
+     *
+     * @see \Sweetchuck\CacheBackend\ArangoDb\CacheItemPool::save
      */
     public function onSave(): static
     {
@@ -217,6 +219,9 @@ class CacheItem implements PhpCacheItem
 
     /**
      * @internal This public method used by the CacheItemPool.
+     *
+     * @see \Sweetchuck\CacheBackend\ArangoDb\CacheItemPool::getItemsFromStorage
+     * @see \Sweetchuck\CacheBackend\ArangoDb\CacheItemPool::getItemsDeferred
      */
     public function onFetch(): static
     {
