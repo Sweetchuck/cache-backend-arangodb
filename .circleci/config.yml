@@ -27,7 +27,7 @@ orbs:
 
 .docker:
     php_min: &docker_php_min
-        image: 'cimg/php:8.1'
+        image: 'cimg/php:8.2'
         environment:
             <<: *env_common
             <<: *env_composer
@@ -35,7 +35,7 @@ orbs:
             <<: *env_arangodb_client
 
     php_plus1: &docker_php_plus1
-        image: 'cimg/php:8.2'
+        image: 'cimg/php:8.3'
         environment:
             <<: *env_common
             <<: *env_composer

@@ -54,7 +54,7 @@
         }
     },
     "require": {
-        "php": ">= 8.1",
+        "php": ">= 8.2",
         "cache/adapter-common": "3.x-dev",
         "cache/tag-interop": "3.x-dev",
         "cache/taggable-cache": "3.x-dev",
@@ -77,7 +77,7 @@
         "sweetchuck/robo-phpmd": "3.x-dev",
         "sweetchuck/robo-phpunit": "3.x-dev",
         "symfony/phpunit-bridge": "^5.0 || ^6.0",
-        "vimeo/psalm": "^5.8"
+        "vimeo/psalm": "^5.18"
     },
     "autoload": {
         "psr-4": {
