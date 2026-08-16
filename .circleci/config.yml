@@ -2,7 +2,7 @@
 version: 2.1
 
 orbs:
-    codecov: 'codecov/codecov@3.0.0'
+    codecov: 'codecov/codecov@6'
 
 .env_common: &env_common
     SHELL: '/bin/bash'
@@ -42,6 +42,14 @@ orbs:
             <<: *env_arangodb_common
             <<: *env_arangodb_client
 
+    #php_plus2: &docker_php_plus2
+    #    image: 'cimg/php:8.4'
+    #    environment:
+    #        <<: *env_common
+    #        <<: *env_composer
+    #        <<: *env_arangodb_common
+    #        <<: *env_arangodb_client
+
     arangodb0310: &docker_arangodb0310
         image: 'arangodb:3.10.4'
         environment:
@@ -72,6 +80,15 @@ executors:
             -
                 name: 'arangodb'
                 <<: *docker_arangodb0310
+
+    #php_plus2_arangodb0310:
+    #    docker:
+    #        -
+    #            name: 'main'
+    #            <<: *docker_php_plus2
+    #        -
+    #            name: 'arangodb'
+    #            <<: *docker_arangodb0310
 
 commands:
     bash_env_init:
@@ -156,7 +173,8 @@ commands:
             -
                 codecov/upload:
                     flags: 'unit'
-                    file: './reports/machine/coverage/coverage.xml'
+                    disable_search: true
+                    files: './reports/machine/coverage/coverage.xml'
             -
                 store_test_results:
                     name: 'Store unit test results'
@@ -177,7 +195,8 @@ commands:
             -
                 codecov/upload:
                     flags: 'acceptance'
-                    file: './reports/machine/coverage/coverage.xml'
+                    disable_search: true
+                    files: './reports/machine/coverage/coverage.xml'
             -
                 store_test_results:
                     name: 'Store acceptance test results'
@@ -236,3 +255,4 @@ workflows:
                             executor:
                                 - 'php_min_arangodb0310'
                                 - 'php_plus1_arangodb0310'
+                                #- 'php_plus2_arangodb0310'
